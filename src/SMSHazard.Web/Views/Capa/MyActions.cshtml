@@ -1,0 +1,28 @@
+@model IReadOnlyList<SMSHazard.Application.DTOs.MyActionDto>
+@{
+    ViewData["Title"] = "My actions";
+}
+<h2 class="mb-3">My corrective actions</h2>
+@if (!Model.Any())
+{
+    <div class="alert alert-light border">You have no assigned actions.</div>
+}
+else
+{
+    <table class="table table-hover align-middle">
+        <thead><tr><th>Hazard</th><th>Action</th><th>Type</th><th>Due</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+        @foreach (var a in Model)
+        {
+            <tr class="@(a.IsOverdue ? "table-danger" : "")">
+                <td class="text-nowrap"><a asp-controller="Hazards" asp-action="Details" asp-route-id="@a.HazardId">@a.HazardRef</a></td>
+                <td>@a.Description</td>
+                <td>@a.Type</td>
+                <td class="text-nowrap">@a.DueDate.ToString("dd MMM yyyy") @(a.IsOverdue ? "⚠" : "")</td>
+                <td>@a.Status</td>
+                <td><a class="btn btn-sm btn-outline-primary" asp-action="Update" asp-route-id="@a.CapaId">Update</a></td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}

@@ -1,0 +1,60 @@
+@model SMSHazard.Web.Models.Hazards.CreateHazardViewModel
+@{
+    ViewData["Title"] = "Report a hazard";
+}
+<h2 class="mb-3">Report a hazard</h2>
+
+<form asp-action="Create" method="post" enctype="multipart/form-data">
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+    <div class="row g-3">
+        <div class="col-md-8">
+            <label asp-for="Title" class="form-label"></label>
+            <input asp-for="Title" class="form-control" />
+            <span asp-validation-for="Title" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="OccurrenceDate" class="form-label"></label>
+            <input asp-for="OccurrenceDate" type="date" class="form-control" />
+            <span asp-validation-for="OccurrenceDate" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="HazardCategoryId" class="form-label"></label>
+            <select asp-for="HazardCategoryId" asp-items="Model.Categories" class="form-select">
+                <option value="">— select category —</option>
+            </select>
+            <span asp-validation-for="HazardCategoryId" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="DepartmentId" class="form-label"></label>
+            <select asp-for="DepartmentId" asp-items="Model.Departments" class="form-select">
+                <option value="">— select department —</option>
+            </select>
+            <span asp-validation-for="DepartmentId" class="text-danger"></span>
+        </div>
+        <div class="col-12">
+            <label asp-for="Description" class="form-label"></label>
+            <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+            <span asp-validation-for="Description" class="text-danger"></span>
+        </div>
+        <div class="col-12">
+            <label asp-for="ImmediateActionTaken" class="form-label"></label>
+            <textarea asp-for="ImmediateActionTaken" class="form-control" rows="2"></textarea>
+            <span asp-validation-for="ImmediateActionTaken" class="text-danger"></span>
+        </div>
+        <div class="col-12">
+            <label asp-for="Attachments" class="form-label"></label>
+            <input asp-for="Attachments" type="file" class="form-control" multiple
+                   accept="image/*,application/pdf" />
+            <div class="form-text">Images or PDF, up to 25 MB each.</div>
+            <span asp-validation-for="Attachments" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="mt-3">
+        <button type="submit" class="btn btn-primary">Submit hazard</button>
+        <a class="btn btn-outline-secondary" asp-action="MyReports">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,35 @@
+@model SMSHazard.Web.Models.LoginViewModel
+@{
+    ViewData["Title"] = "Sign in";
+}
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <h2 class="mb-3">Sign in</h2>
+        <form asp-action="Login" method="post">
+            <input type="hidden" asp-for="ReturnUrl" />
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" autocomplete="username" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label"></label>
+                <input asp-for="Password" class="form-control" autocomplete="current-password" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+            <div class="form-check mb-3">
+                <input asp-for="RememberMe" class="form-check-input" />
+                <label asp-for="RememberMe" class="form-check-label"></label>
+            </div>
+            <button type="submit" class="btn btn-primary">Sign in</button>
+        </form>
+        <div class="mt-4 small text-muted">
+            <strong>Demo accounts</strong> (password <code>SmsHazard#2026</code>):<br />
+            admin@smshazard.demo &middot; manager@smshazard.demo &middot; officer@smshazard.demo &middot; reporter@smshazard.demo &middot; owner@smshazard.demo
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,15 @@
+<Project>
+  <!--
+    Solution-wide build settings.
+    NuGetAuditMode=direct audits only DIRECT PackageReferences, not transitive ones.
+    Rationale: several high-severity advisories are reported against transitive packages
+    (e.g. System.Security.Cryptography.Xml pulled in via MailKit) that we cannot upgrade
+    independently and do not exercise. Auditing direct dependencies keeps the signal that
+    matters while removing unactionable transitive noise. Recorded in the Technical Debt Plan.
+  -->
+  <PropertyGroup>
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>direct</NuGetAuditMode>
+    <NuGetAuditLevel>high</NuGetAuditLevel>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,80 @@
+@model SMSHazard.Web.Models.Hazards.HazardListViewModel
+@{
+    ViewData["Title"] = Model.Heading;
+}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">@Model.Heading</h2>
+    <a class="btn btn-primary" asp-action="Create">+ Report hazard</a>
+</div>
+
+@if (Model.ShowFilters)
+{
+    <form method="get" asp-action="Index" class="row g-2 mb-3">
+        <div class="col-auto">
+            <select name="Status" class="form-select form-select-sm" asp-items="Html.GetEnumSelectList<HazardStatus>()">
+                <option value="">All statuses</option>
+            </select>
+        </div>
+        <div class="col-auto">
+            <select name="RiskLevel" class="form-select form-select-sm" asp-items="Html.GetEnumSelectList<RiskLevel>()">
+                <option value="">All risk levels</option>
+            </select>
+        </div>
+        <div class="col-auto">
+            <select name="DepartmentId" class="form-select form-select-sm" asp-items="Model.Departments">
+                <option value="">All departments</option>
+            </select>
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-sm btn-outline-secondary">Filter</button>
+            <a class="btn btn-sm btn-outline-secondary" asp-action="Index">Reset</a>
+        </div>
+    </form>
+}
+
+@if (!Model.Items.Any())
+{
+    <div class="alert alert-light border">No hazards found.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Ref</th><th>Title</th><th>Category</th><th>Department</th>
+                    <th>Risk</th><th>Status</th><th>Reported</th><th></th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var h in Model.Items)
+            {
+                <tr>
+                    <td class="text-nowrap"><a asp-action="Details" asp-route-id="@h.Id">@h.ReferenceNo</a></td>
+                    <td>@h.Title</td>
+                    <td>@h.CategoryName</td>
+                    <td>@h.DepartmentName</td>
+                    <td>
+                        @if (h.CurrentRiskLevel is not null)
+                        {
+                            <span class="badge @HazardDisplay.RiskCss(h.CurrentRiskLevel)">@h.CurrentRiskLevel (@h.CurrentRiskScore)</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted small">not assessed</span>
+                        }
+                    </td>
+                    <td><span class="badge @HazardDisplay.StatusCss(h.Status)">@HazardDisplay.StatusText(h.Status)</span></td>
+                    <td class="text-nowrap">@h.ReportedDate.ToString("dd MMM yyyy")</td>
+                    <td>
+                        @if (h.OverdueCount > 0)
+                        {
+                            <span class="badge bg-danger" title="Overdue corrective actions">@h.OverdueCount overdue</span>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

@@ -1,0 +1,163 @@
+@model SMSHazard.Application.DTOs.HazardDetailDto
+@{
+    ViewData["Title"] = Model.ReferenceNo;
+}
+
+@if (TempData["Success"] is string ok)
+{
+    <div class="alert alert-success">@ok</div>
+}
+@if (TempData["Error"] is string err)
+{
+    <div class="alert alert-danger">@err</div>
+}
+@{
+    var isStaff = User.IsInRole("SafetyOfficer") || User.IsInRole("Manager") || User.IsInRole("Admin");
+}
+@if (isStaff)
+{
+    <div class="mb-3 d-flex gap-2 flex-wrap">
+        @if (Model.Status != HazardStatus.Closed && Model.Status != HazardStatus.Rejected)
+        {
+            <a class="btn btn-primary" asp-action="Assess" asp-route-id="@Model.Id">@(Model.Assessments.Any() ? "Re-assess risk" : "Assess risk")</a>
+        }
+        @if (Model.Status == HazardStatus.ActionRequired || Model.Status == HazardStatus.InProgress)
+        {
+            <a class="btn btn-warning" asp-controller="Capa" asp-action="Create" asp-route-hazardId="@Model.Id">Assign action</a>
+        }
+        @if (Model.Status == HazardStatus.UnderVerification)
+        {
+            <a class="btn btn-success" asp-controller="Capa" asp-action="Verify" asp-route-hazardId="@Model.Id">Verify &amp; close</a>
+        }
+        @if (Model.Status == HazardStatus.Reported)
+        {
+            <form asp-controller="Capa" asp-action="Reject" method="post" class="d-inline"
+                  onsubmit="return confirm('Reject this hazard?');">
+                <input type="hidden" name="hazardId" value="@Model.Id" />
+                <button type="submit" class="btn btn-outline-danger">Reject</button>
+            </form>
+        }
+        @if (Model.Status == HazardStatus.Closed)
+        {
+            <form asp-controller="Capa" asp-action="Reopen" method="post" class="d-inline">
+                <input type="hidden" name="hazardId" value="@Model.Id" />
+                <button type="submit" class="btn btn-outline-secondary">Reopen</button>
+            </form>
+        }
+    </div>
+}
+
+<div class="d-flex justify-content-between align-items-start mb-2">
+    <div>
+        <h2 class="mb-1">@Model.Title</h2>
+        <div class="text-muted">@Model.ReferenceNo &middot; @Model.CategoryName &middot; @Model.DepartmentName</div>
+    </div>
+    <span class="badge fs-6 @HazardDisplay.StatusCss(Model.Status)">@HazardDisplay.StatusText(Model.Status)</span>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-8">
+        <div class="card mb-3"><div class="card-body">
+            <h5 class="card-title">Description</h5>
+            <p class="card-text">@Model.Description</p>
+            @if (!string.IsNullOrWhiteSpace(Model.ImmediateActionTaken))
+            {
+                <h6 class="mt-3">Immediate action taken</h6>
+                <p class="card-text">@Model.ImmediateActionTaken</p>
+            }
+        </div></div>
+
+        <div class="card mb-3"><div class="card-body">
+            <h5 class="card-title">Risk assessments</h5>
+            @if (!Model.Assessments.Any())
+            {
+                <p class="text-muted mb-0">Not yet assessed.</p>
+            }
+            else
+            {
+                <table class="table table-sm">
+                    <thead><tr><th>Type</th><th>L×S</th><th>Score</th><th>Level</th><th>By</th><th>Date</th><th>Rationale</th></tr></thead>
+                    <tbody>
+                    @foreach (var a in Model.Assessments)
+                    {
+                        <tr>
+                            <td>@(a.IsResidual ? "Residual" : "Initial")</td>
+                            <td>@a.Likelihood × @a.Severity</td>
+                            <td>@a.RiskScore</td>
+                            <td><span class="badge @HazardDisplay.RiskCss(a.RiskLevel)">@a.RiskLevel</span></td>
+                            <td>@a.AssessedByName</td>
+                            <td class="text-nowrap">@a.AssessedDate.ToString("dd MMM yyyy")</td>
+                            <td class="small">@a.Rationale</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            }
+        </div></div>
+
+        <div class="card mb-3"><div class="card-body">
+            <h5 class="card-title">Corrective / preventive actions</h5>
+            @if (!Model.CorrectiveActions.Any())
+            {
+                <p class="text-muted mb-0">No actions assigned yet.</p>
+            }
+            else
+            {
+                <table class="table table-sm">
+                    <thead><tr><th>Description</th><th>Type</th><th>Owner</th><th>Due</th><th>Status</th></tr></thead>
+                    <tbody>
+                    @foreach (var c in Model.CorrectiveActions)
+                    {
+                        <tr class="@(c.IsOverdue ? "table-danger" : "")">
+                            <td>@c.Description</td>
+                            <td>@c.Type</td>
+                            <td>@c.AssignedToName</td>
+                            <td class="text-nowrap">@c.DueDate.ToString("dd MMM yyyy") @(c.IsOverdue ? "⚠" : "")</td>
+                            <td>@c.Status</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            }
+        </div></div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-3"><div class="card-body">
+            <h6 class="card-title">Details</h6>
+            <dl class="row mb-0 small">
+                <dt class="col-5">Reported by</dt><dd class="col-7">@Model.ReporterName</dd>
+                <dt class="col-5">Reported</dt><dd class="col-7">@Model.ReportedDate.ToString("dd MMM yyyy HH:mm")</dd>
+                <dt class="col-5">Occurred</dt><dd class="col-7">@Model.OccurrenceDate.ToString("dd MMM yyyy")</dd>
+            </dl>
+        </div></div>
+
+        <div class="card"><div class="card-body">
+            <h6 class="card-title">Attachments</h6>
+            @if (!Model.Attachments.Any())
+            {
+                <p class="text-muted mb-0 small">None.</p>
+            }
+            else
+            {
+                <ul class="list-unstyled mb-0">
+                @foreach (var f in Model.Attachments)
+                {
+                    <li class="mb-1">
+                        <a asp-action="Attachment" asp-route-id="@f.Id">@f.FileName</a>
+                        <span class="text-muted small">(@(f.SizeBytes / 1024) KB)</span>
+                    </li>
+                }
+                </ul>
+            }
+        </div></div>
+    </div>
+</div>
+
+<div class="mt-3">
+    <a class="btn btn-outline-secondary" asp-action="MyReports">My reports</a>
+    @if (User.IsInRole("SafetyOfficer") || User.IsInRole("Manager") || User.IsInRole("Admin"))
+    {
+        <a class="btn btn-outline-secondary" asp-action="Index">Hazard register</a>
+    }
+</div>

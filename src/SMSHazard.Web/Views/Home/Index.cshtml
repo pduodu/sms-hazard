@@ -1,0 +1,43 @@
+@{
+    ViewData["Title"] = "Home";
+}
+<div class="p-4 mb-4 bg-light rounded-3">
+    <h1 class="display-6">SMS-Hazard</h1>
+    <p class="lead">Enterprise hazard reporting, risk assessment &amp; corrective-action management.</p>
+    <p class="text-muted mb-3">Safety loop: Report → Assess → Assign CAPA → Work → Verify → Close.</p>
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <p>Welcome back, <strong>@User.Identity!.Name</strong>.</p>
+    }
+    else
+    {
+        <a class="btn btn-primary" asp-controller="Account" asp-action="Login">Sign in to get started</a>
+    }
+</div>
+
+<div class="row g-3">
+    <div class="col-md-3">
+        <div class="card h-100"><div class="card-body">
+            <h5 class="card-title">1. Report</h5>
+            <p class="card-text small">Staff log hazards and near-misses with evidence attachments.</p>
+        </div></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100"><div class="card-body">
+            <h5 class="card-title">2. Assess</h5>
+            <p class="card-text small">Safety officers score risk on the 5×5 likelihood–severity matrix.</p>
+        </div></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100"><div class="card-body">
+            <h5 class="card-title">3. Act</h5>
+            <p class="card-text small">Corrective/preventive actions are assigned with owners and due dates.</p>
+        </div></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100"><div class="card-body">
+            <h5 class="card-title">4. Verify &amp; Close</h5>
+            <p class="card-text small">Residual risk is re-assessed and the hazard is closed with a full audit trail.</p>
+        </div></div>
+    </div>
+</div>
