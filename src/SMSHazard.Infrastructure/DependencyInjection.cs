@@ -32,7 +32,7 @@ public static class DependencyInjection
         services.AddScoped<IRiskService, RiskService>();
         services.AddScoped<ICapaService, CapaService>();
         services.AddScoped<INotificationService, NotificationService>();
-        // IReminderService is added in Phase 9.
+        services.AddScoped<IReminderService, ReminderService>();
 
         return services;
     }

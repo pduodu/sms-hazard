@@ -1,3 +1,4 @@
+using Hangfire;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SMSHazard.Application.DTOs;
@@ -44,7 +45,7 @@ public sealed class NotificationService : INotificationService
         {
             var user = await _users.FindByIdAsync(userId);
             if (!string.IsNullOrWhiteSpace(user?.Email))
-                await _email.SendAsync(user!.Email!, title, BuildHtml(title, message, linkUrl), ct);
+                QueueEmail(user!.Email!, title, message, linkUrl);
         }
     }
 
@@ -69,7 +70,24 @@ public sealed class NotificationService : INotificationService
         if (alsoEmail)
         {
             foreach (var user in recipients.Where(u => u.IsActive && !string.IsNullOrWhiteSpace(u.Email)))
-                await _email.SendAsync(user.Email!, title, BuildHtml(title, message, linkUrl), ct);
+                QueueEmail(user.Email!, title, message, linkUrl);
+        }
+    }
+
+    /// <summary>
+    /// Offloads the email to Hangfire so it never blocks the request (resolves D11).
+    /// Falls back to an inline send if Hangfire storage is unavailable (e.g. tests).
+    /// </summary>
+    private void QueueEmail(string to, string subject, string message, string? linkUrl)
+    {
+        var html = BuildHtml(subject, message, linkUrl);
+        try
+        {
+            BackgroundJob.Enqueue<IEmailSender>(s => s.SendAsync(to, subject, html, CancellationToken.None));
+        }
+        catch
+        {
+            _ = _email.SendAsync(to, subject, html); // best-effort fallback
         }
     }
 

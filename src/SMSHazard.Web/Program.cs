@@ -1,11 +1,15 @@
+using Hangfire;
+using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SMSHazard.Application;
+using SMSHazard.Application.Interfaces;
 using SMSHazard.Infrastructure;
 using SMSHazard.Infrastructure.Identity;
 using SMSHazard.Infrastructure.Persistence;
+using SMSHazard.Web.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -60,6 +64,15 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 builder.Services.AddControllersWithViews();
 
+// --- Hangfire: durable, PostgreSQL-backed recurring reminders + background email.
+var hangfireConn = builder.Configuration.GetConnectionString("Default");
+builder.Services.AddHangfire(cfg => cfg
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UsePostgreSqlStorage(o => o.UseNpgsqlConnection(hangfireConn)));
+builder.Services.AddHangfireServer();
+
 var app = builder.Build();
 
 app.UseForwardedHeaders();
@@ -74,6 +87,12 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Hangfire dashboard, gated to Admins (after auth so User is populated).
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = new[] { new AdminOnlyDashboardFilter() }
+});
 
 app.MapControllerRoute(
     name: "default",
@@ -90,5 +109,11 @@ using (var scope = app.Services.CreateScope())
     db.Database.Migrate();
     await SeedData.InitializeAsync(scope.ServiceProvider);
 }
+
+// Register the hourly reminder job (idempotent — safe on every startup).
+RecurringJob.AddOrUpdate<IReminderService>(
+    "capa-reminders",
+    svc => svc.ProcessDueRemindersAsync(),
+    Cron.Hourly());
 
 app.Run();
