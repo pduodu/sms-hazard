@@ -1,0 +1,71 @@
+@model SMSHazard.Application.DTOs.DashboardDto
+@{
+    ViewData["Title"] = "Dashboard";
+}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Safety dashboard</h2>
+    <a class="btn btn-outline-secondary" asp-controller="Hazards" asp-action="Index">Open risk register</a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card text-bg-primary h-100"><div class="card-body">
+            <div class="display-6">@Model.OpenHazards</div><div>Open hazards</div>
+        </div></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-bg-danger h-100"><div class="card-body">
+            <div class="display-6">@Model.OverdueActions</div><div>Overdue actions</div>
+        </div></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-bg-warning h-100"><div class="card-body">
+            <div class="display-6">@Model.HighRiskHazards</div><div>High / Extreme risk</div>
+        </div></div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-bg-success h-100"><div class="card-body">
+            <div class="display-6">@Model.ClosedThisPeriod</div><div>Closed (last 30 days)</div>
+        </div></div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="card h-100"><div class="card-body">
+            <h5 class="card-title">Risk-level distribution</h5>
+            <canvas id="riskChart" height="220"></canvas>
+        </div></div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100"><div class="card-body">
+            <h5 class="card-title">Summary</h5>
+            <table class="table table-sm mb-0">
+                <tr><td><span class="badge bg-success">Low</span></td><td>@Model.Low</td></tr>
+                <tr><td><span class="badge bg-warning text-dark">Medium</span></td><td>@Model.Medium</td></tr>
+                <tr><td><span class="badge bg-orange text-white">High</span></td><td>@Model.High</td></tr>
+                <tr><td><span class="badge bg-danger">Extreme</span></td><td>@Model.Extreme</td></tr>
+                <tr><td><span class="badge bg-secondary">Not assessed</span></td><td>@Model.NotAssessed</td></tr>
+                <tr class="fw-bold"><td>Total hazards</td><td>@Model.TotalHazards</td></tr>
+            </table>
+        </div></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script>
+        const ctx = document.getElementById('riskChart');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Low', 'Medium', 'High', 'Extreme', 'Not assessed'],
+                datasets: [{
+                    data: [@Model.Low, @Model.Medium, @Model.High, @Model.Extreme, @Model.NotAssessed],
+                    backgroundColor: ['#198754', '#ffc107', '#fd7e14', '#dc3545', '#6c757d']
+                }]
+            },
+            options: { plugins: { legend: { position: 'right' } } }
+        });
+    </script>
+}

@@ -26,8 +26,8 @@
                         <li class="nav-item"><a class="nav-link" asp-controller="Capa" asp-action="MyActions">My actions</a></li>
                         @if (User.IsInRole("SafetyOfficer") || User.IsInRole("Manager") || User.IsInRole("Admin"))
                         {
+                            <li class="nav-item"><a class="nav-link" asp-controller="Dashboard" asp-action="Index">Dashboard</a></li>
                             <li class="nav-item"><a class="nav-link" asp-controller="Hazards" asp-action="Index">Register</a></li>
-                            <li class="nav-item"><a class="nav-link disabled" href="#">Dashboard <span class="badge bg-secondary">soon</span></a></li>
                         }
                         @if (User.IsInRole("Admin"))
                         {

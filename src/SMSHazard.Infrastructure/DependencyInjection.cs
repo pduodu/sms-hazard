@@ -33,6 +33,7 @@ public static class DependencyInjection
         services.AddScoped<ICapaService, CapaService>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IReminderService, ReminderService>();
+        services.AddScoped<IDashboardService, DashboardService>();
 
         return services;
     }
