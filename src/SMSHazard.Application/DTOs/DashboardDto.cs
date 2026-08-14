@@ -15,4 +15,14 @@ public sealed class DashboardDto
     public int High { get; set; }
     public int Extreme { get; set; }
     public int NotAssessed { get; set; }
+
+    /// <summary>5×5 heat-map counts, indexed [likelihood-1][severity-1] (each 1..5).</summary>
+    public int[][] Heat { get; set; } = CreateEmptyHeat();
+
+    public static int[][] CreateEmptyHeat()
+    {
+        var h = new int[5][];
+        for (var i = 0; i < 5; i++) h[i] = new int[5];
+        return h;
+    }
 }

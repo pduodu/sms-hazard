@@ -1,0 +1,30 @@
+@model SMSHazard.Web.Models.Users.EditUserViewModel
+@{
+    ViewData["Title"] = "Edit user";
+}
+<h2 class="mb-3">Edit user</h2>
+<form asp-action="Edit" method="post" style="max-width:520px">
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="Email" />
+    <div asp-validation-summary="All" class="text-danger mb-2"></div>
+    <div class="mb-3">
+        <label class="form-label">Email</label>
+        <input class="form-control" value="@Model.Email" disabled />
+    </div>
+    <div class="mb-3">
+        <label asp-for="FullName" class="form-label"></label>
+        <input asp-for="FullName" class="form-control" />
+        <span asp-validation-for="FullName" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Role" class="form-label"></label>
+        <select asp-for="Role" asp-items="Model.Roles" class="form-select"></select>
+    </div>
+    <div class="form-check mb-3">
+        <input asp-for="IsActive" class="form-check-input" />
+        <label asp-for="IsActive" class="form-check-label">Active (can sign in)</label>
+    </div>
+    <button type="submit" class="btn btn-primary">Save</button>
+    <a class="btn btn-outline-secondary" asp-action="Index">Cancel</a>
+</form>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

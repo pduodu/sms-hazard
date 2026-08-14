@@ -52,6 +52,49 @@
     </div>
 </div>
 
+@functions {
+    static string HeatColour(int score) =>
+        score <= 4 ? "#198754" : score <= 9 ? "#ffc107" : score <= 15 ? "#fd7e14" : "#dc3545";
+    static string HeatText(int score) => (score >= 5 && score <= 9) ? "#000" : "#fff";
+}
+
+<div class="card mt-3"><div class="card-body">
+    <h5 class="card-title">Risk heat-map (Likelihood × Severity)</h5>
+    <p class="text-muted small mb-2">Count of hazards in each 5×5 matrix cell, by their latest assessment.</p>
+    <table class="table table-bordered text-center mb-0" style="max-width:640px">
+        <thead>
+            <tr>
+                <th style="width:90px">L \ S</th>
+                <th>1<br/><span class="small text-muted">Negligible</span></th>
+                <th>2<br/><span class="small text-muted">Minor</span></th>
+                <th>3<br/><span class="small text-muted">Major</span></th>
+                <th>4<br/><span class="small text-muted">Hazardous</span></th>
+                <th>5<br/><span class="small text-muted">Catastrophic</span></th>
+            </tr>
+        </thead>
+        <tbody>
+        @{
+            var likelihoodLabels = new[] { "", "Extremely Improbable", "Improbable", "Remote", "Occasional", "Frequent" };
+        }
+        @for (var l = 5; l >= 1; l--)
+        {
+            <tr>
+                <th class="align-middle">@l<br/><span class="small text-muted">@likelihoodLabels[l]</span></th>
+                @for (var s = 1; s <= 5; s++)
+                {
+                    var score = l * s;
+                    var count = Model.Heat[l - 1][s - 1];
+                    <td style="background-color:@HeatColour(score); color:@HeatText(score); font-weight:@(count > 0 ? "bold" : "normal")">
+                        @(count > 0 ? count.ToString() : "")
+                        <div class="small" style="opacity:.7">@score</div>
+                    </td>
+                }
+            </tr>
+        }
+        </tbody>
+    </table>
+</div></div>
+
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <script>

@@ -62,6 +62,47 @@ public class AccountController : Controller
     [AllowAnonymous]
     public IActionResult AccessDenied() => View();
 
+    // ---- Profile ----
+    [HttpGet]
+    [Authorize]
+    public async Task<IActionResult> Profile()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user is null) return Challenge();
+        var roles = await _userManager.GetRolesAsync(user);
+        return View(new ProfileViewModel
+        {
+            FullName = user.FullName,
+            Email = user.Email ?? "",
+            Roles = string.Join(", ", roles)
+        });
+    }
+
+    // ---- Change password ----
+    [HttpGet]
+    [Authorize]
+    public IActionResult ChangePassword() => View(new ChangePasswordViewModel());
+
+    [HttpPost]
+    [Authorize]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
+    {
+        if (!ModelState.IsValid) return View(model);
+        var user = await _userManager.GetUserAsync(User);
+        if (user is null) return Challenge();
+
+        var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+        if (!result.Succeeded)
+        {
+            foreach (var e in result.Errors) ModelState.AddModelError(string.Empty, e.Description);
+            return View(model);
+        }
+        await _signInManager.RefreshSignInAsync(user);
+        TempData["Success"] = "Your password has been changed.";
+        return RedirectToAction(nameof(Profile));
+    }
+
     private IActionResult RedirectToLocal(string? returnUrl)
         => Url.IsLocalUrl(returnUrl) ? Redirect(returnUrl!) : RedirectToAction("Index", "Home");
 }

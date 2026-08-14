@@ -31,6 +31,8 @@
                         }
                         @if (User.IsInRole("Admin"))
                         {
+                            <li class="nav-item"><a class="nav-link" asp-controller="Users" asp-action="Index">Users</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Config" asp-action="Index">Configuration</a></li>
                             <li class="nav-item"><a class="nav-link" asp-controller="Audit" asp-action="Index">Audit</a></li>
                             <li class="nav-item"><a class="nav-link" href="/hangfire">Reminders</a></li>
                         }
@@ -44,8 +46,8 @@
                             : User.IsInRole("Manager") ? "Manager"
                             : User.IsInRole("SafetyOfficer") ? "Safety Officer"
                             : User.IsInRole("Reporter") ? "Reporter" : "User";
-                        <li class="nav-item d-flex align-items-center text-light me-2">
-                            <span class="me-2">@User.Identity!.Name</span>
+                        <li class="nav-item d-flex align-items-center me-2">
+                            <a class="nav-link p-0 me-2" asp-controller="Account" asp-action="Profile">@User.Identity!.Name</a>
                             <span class="badge bg-info text-dark">@role</span>
                         </li>
                         <li class="nav-item">

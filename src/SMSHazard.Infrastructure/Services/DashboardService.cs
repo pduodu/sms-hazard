@@ -17,14 +17,14 @@ public sealed class DashboardService : IDashboardService
         var today = DateTime.UtcNow.Date;
         var cutoff = today.AddDays(-30);
 
-        // One projection per hazard with its current (latest) risk level — avoids N+1.
+        // One projection per hazard with its current (latest) risk level + L/S — avoids N+1.
         var rows = await _db.HazardReports.AsNoTracking()
             .Select(h => new
             {
                 h.Status,
-                Level = h.Assessments
+                Latest = h.Assessments
                     .OrderByDescending(a => a.AssessedDate)
-                    .Select(a => (RiskLevel?)a.RiskLevel)
+                    .Select(a => new { a.RiskLevel, a.Likelihood, a.Severity })
                     .FirstOrDefault(),
                 ClosedRecently = h.Status == HazardStatus.Closed && (h.UpdatedAt ?? h.CreatedAt) >= cutoff
             })
@@ -40,13 +40,22 @@ public sealed class DashboardService : IDashboardService
             OpenHazards = rows.Count(r => r.Status != HazardStatus.Closed && r.Status != HazardStatus.Rejected),
             ClosedThisPeriod = rows.Count(r => r.ClosedRecently),
             OverdueActions = overdue,
-            Low = rows.Count(r => r.Level == RiskLevel.Low),
-            Medium = rows.Count(r => r.Level == RiskLevel.Medium),
-            High = rows.Count(r => r.Level == RiskLevel.High),
-            Extreme = rows.Count(r => r.Level == RiskLevel.Extreme),
-            NotAssessed = rows.Count(r => r.Level == null)
+            Low = rows.Count(r => r.Latest != null && r.Latest.RiskLevel == RiskLevel.Low),
+            Medium = rows.Count(r => r.Latest != null && r.Latest.RiskLevel == RiskLevel.Medium),
+            High = rows.Count(r => r.Latest != null && r.Latest.RiskLevel == RiskLevel.High),
+            Extreme = rows.Count(r => r.Latest != null && r.Latest.RiskLevel == RiskLevel.Extreme),
+            NotAssessed = rows.Count(r => r.Latest == null)
         };
         dto.HighRiskHazards = dto.High + dto.Extreme;
+
+        // 5×5 heat-map: count hazards by their latest (likelihood, severity).
+        foreach (var r in rows.Where(r => r.Latest != null))
+        {
+            var l = r.Latest!.Likelihood;
+            var s = r.Latest!.Severity;
+            if (l is >= 1 and <= 5 && s is >= 1 and <= 5)
+                dto.Heat[l - 1][s - 1]++;
+        }
         return dto;
     }
 }
