@@ -21,7 +21,10 @@ public static class DependencyInjection
         var connectionString = config.GetConnectionString("Default")
             ?? "Host=127.0.0.1;Port=5432;Database=smshazard;Username=smshazard;Password=CHANGE_ME;SSL Mode=Disable";
 
-        services.AddDbContext<AppDbContext>(opt => opt.UseNpgsql(connectionString));
+        services.AddScoped<AuditSaveChangesInterceptor>();
+        services.AddDbContext<AppDbContext>((sp, opt) =>
+            opt.UseNpgsql(connectionString)
+               .AddInterceptors(sp.GetRequiredService<AuditSaveChangesInterceptor>()));
 
         services.Configure<EmailSettings>(config.GetSection("Email"));
         services.Configure<StorageSettings>(config.GetSection("Storage"));
@@ -34,6 +37,7 @@ public static class DependencyInjection
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IReminderService, ReminderService>();
         services.AddScoped<IDashboardService, DashboardService>();
+        services.AddScoped<IAuditService, AuditService>();
 
         return services;
     }

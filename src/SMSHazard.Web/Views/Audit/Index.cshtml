@@ -1,0 +1,51 @@
+@model IReadOnlyList<SMSHazard.Application.DTOs.AuditLogDto>
+@{
+    ViewData["Title"] = "Audit log";
+    var entity = ViewBag.Entity as string;
+}
+<h2 class="mb-3">Audit log</h2>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-auto">
+        <select name="entity" class="form-select form-select-sm">
+            <option value="">All entities</option>
+            <option value="HazardReport" selected="@(entity == "HazardReport")">Hazard reports</option>
+            <option value="RiskAssessment" selected="@(entity == "RiskAssessment")">Risk assessments</option>
+            <option value="CorrectiveAction" selected="@(entity == "CorrectiveAction")">Corrective actions</option>
+        </select>
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-sm btn-outline-secondary">Filter</button>
+        <a class="btn btn-sm btn-outline-secondary" asp-action="Index">Reset</a>
+    </div>
+</form>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-light border">No audit entries.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-sm table-striped align-middle">
+            <thead>
+                <tr><th>When</th><th>Entity</th><th>Id</th><th>Action</th><th>By</th><th>Change</th></tr>
+            </thead>
+            <tbody>
+            @foreach (var a in Model)
+            {
+                <tr>
+                    <td class="text-nowrap">@a.Timestamp.ToString("dd MMM yyyy HH:mm:ss")</td>
+                    <td>@a.EntityName</td>
+                    <td>@a.EntityId</td>
+                    <td>
+                        <span class="badge @(a.Action == "Created" ? "bg-success" : a.Action == "Deleted" ? "bg-danger" : "bg-secondary")">@a.Action</span>
+                    </td>
+                    <td>@a.ChangedByName</td>
+                    <td class="small">@a.ChangeSummary</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
