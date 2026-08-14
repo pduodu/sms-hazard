@@ -1,0 +1,34 @@
+@model IReadOnlyList<SMSHazard.Application.DTOs.NotificationDto>
+@{
+    ViewData["Title"] = "Notifications";
+}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Notifications</h2>
+    @if (Model.Any(n => !n.IsRead))
+    {
+        <form asp-action="MarkAllRead" method="post">
+            <button type="submit" class="btn btn-sm btn-outline-secondary">Mark all read</button>
+        </form>
+    }
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-light border">No notifications.</div>
+}
+else
+{
+    <div class="list-group">
+    @foreach (var n in Model)
+    {
+        <a class="list-group-item list-group-item-action @(n.IsRead ? "" : "list-group-item-warning")"
+           asp-action="Open" asp-route-id="@n.Id" asp-route-url="@n.LinkUrl">
+            <div class="d-flex justify-content-between">
+                <strong>@n.Title</strong>
+                <small class="text-muted">@n.CreatedDate.ToString("dd MMM yyyy HH:mm")</small>
+            </div>
+            <div class="small">@n.Message</div>
+        </a>
+    }
+    </div>
+}

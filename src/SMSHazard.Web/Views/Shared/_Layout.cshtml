@@ -38,6 +38,7 @@
                 <ul class="navbar-nav">
                     @if (User.Identity?.IsAuthenticated == true)
                     {
+                        <li class="nav-item">@await Component.InvokeAsync("NotificationBell")</li>
                         var role = User.IsInRole("Admin") ? "Admin"
                             : User.IsInRole("Manager") ? "Manager"
                             : User.IsInRole("SafetyOfficer") ? "Safety Officer"
@@ -70,6 +71,26 @@
     <div class="container">&copy; 2026 SMS-Hazard — CSCD602 Capstone (22427657)</div>
 </footer>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+@if (User.Identity?.IsAuthenticated == true)
+{
+    <script>
+        // MVP in-app notifications: poll the unread count and update the bell badge.
+        (function () {
+            var badge = document.getElementById('notif-badge');
+            if (!badge) return;
+            async function poll() {
+                try {
+                    var r = await fetch('/Notifications/UnreadCount', { headers: { 'Accept': 'application/json' } });
+                    if (!r.ok) return;
+                    var d = await r.json();
+                    if (d.count > 0) { badge.textContent = d.count; badge.classList.remove('d-none'); }
+                    else { badge.classList.add('d-none'); }
+                } catch (e) { /* ignore transient errors */ }
+            }
+            setInterval(poll, 30000);
+        })();
+    </script>
+}
 @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

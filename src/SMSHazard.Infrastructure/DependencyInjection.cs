@@ -31,7 +31,8 @@ public static class DependencyInjection
         services.AddScoped<IHazardService, HazardService>();
         services.AddScoped<IRiskService, RiskService>();
         services.AddScoped<ICapaService, CapaService>();
-        // INotificationService, IReminderService and remaining adapters are added per phase (8+).
+        services.AddScoped<INotificationService, NotificationService>();
+        // IReminderService is added in Phase 9.
 
         return services;
     }

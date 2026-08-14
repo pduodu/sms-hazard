@@ -11,8 +11,13 @@ namespace SMSHazard.Infrastructure.Services;
 public sealed class CapaService : ICapaService
 {
     private readonly AppDbContext _db;
+    private readonly INotificationService _notify;
 
-    public CapaService(AppDbContext db) => _db = db;
+    public CapaService(AppDbContext db, INotificationService notify)
+    {
+        _db = db;
+        _notify = notify;
+    }
 
     public async Task<IReadOnlyList<UserOption>> GetAssignableUsersAsync(CancellationToken ct = default) =>
         await _db.Users.Where(u => u.IsActive)
@@ -45,6 +50,12 @@ public sealed class CapaService : ICapaService
             hazard.TransitionTo(HazardStatus.InProgress);
 
         await _db.SaveChangesAsync(ct);
+
+        await _notify.NotifyUserAsync(request.AssignedToId,
+            $"Action assigned on {hazard.ReferenceNo}",
+            $"You have been assigned a {request.Type} action, due {DateTime.SpecifyKind(request.DueDate, DateTimeKind.Utc):dd MMM yyyy}.",
+            $"/Hazards/Details/{hazard.Id}", alsoEmail: true, ct);
+
         return true;
     }
 
@@ -106,10 +117,18 @@ public sealed class CapaService : ICapaService
         var hazard = capa.HazardReport!;
         var allDone = hazard.CorrectiveActions.All(c =>
             c.Status == CapaStatus.Completed || c.Status == CapaStatus.Verified);
-        if (allDone && hazard.Status == HazardStatus.InProgress)
+        var movedToVerification = allDone && hazard.Status == HazardStatus.InProgress;
+        if (movedToVerification)
             hazard.TransitionTo(HazardStatus.UnderVerification);
 
         await _db.SaveChangesAsync(ct);
+
+        if (movedToVerification)
+            await _notify.NotifyRoleAsync("SafetyOfficer",
+                $"Hazard {hazard.ReferenceNo} ready for verification",
+                "All corrective actions are complete. Verify effectiveness and residual risk to close.",
+                $"/Hazards/Details/{hazard.Id}", alsoEmail: true, ct);
+
         return true;
     }
 
@@ -155,6 +174,14 @@ public sealed class CapaService : ICapaService
         hazard.TransitionTo(acceptable ? HazardStatus.Closed : HazardStatus.ActionRequired);
 
         await _db.SaveChangesAsync(ct);
+
+        await _notify.NotifyUserAsync(hazard.ReportedById,
+            acceptable ? $"Hazard {hazard.ReferenceNo} closed" : $"Hazard {hazard.ReferenceNo} needs more mitigation",
+            acceptable
+                ? $"Verified and closed. Residual risk {residual.Score} ({residual.Level})."
+                : $"Residual risk {residual.Score} ({residual.Level}) is not acceptable; further corrective action is required.",
+            $"/Hazards/Details/{hazard.Id}", alsoEmail: true, ct);
+
         return new VerifyOutcome(acceptable, residual.Level, residual.Score);
     }
 
@@ -165,6 +192,12 @@ public sealed class CapaService : ICapaService
         hazard.TransitionTo(HazardStatus.Rejected);
         hazard.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync(ct);
+
+        await _notify.NotifyUserAsync(hazard.ReportedById,
+            $"Hazard {hazard.ReferenceNo} rejected",
+            string.IsNullOrWhiteSpace(reason) ? "Your reported hazard was rejected." : $"Rejected: {reason}",
+            $"/Hazards/Details/{hazard.Id}", alsoEmail: true, ct);
+
         return true;
     }
 

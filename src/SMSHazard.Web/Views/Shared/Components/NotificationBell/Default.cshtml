@@ -1,0 +1,8 @@
+@model int
+<a class="nav-link position-relative" asp-controller="Notifications" asp-action="Index" title="Notifications">
+    🔔
+    <span id="notif-badge"
+          class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger @(Model == 0 ? "d-none" : "")">
+        @Model
+    </span>
+</a>

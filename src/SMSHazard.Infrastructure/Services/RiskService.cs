@@ -10,8 +10,13 @@ namespace SMSHazard.Infrastructure.Services;
 public sealed class RiskService : IRiskService
 {
     private readonly AppDbContext _db;
+    private readonly INotificationService _notify;
 
-    public RiskService(AppDbContext db) => _db = db;
+    public RiskService(AppDbContext db, INotificationService notify)
+    {
+        _db = db;
+        _notify = notify;
+    }
 
     public async Task<(int Score, RiskLevel Level)?> AssessAsync(
         int hazardId, int likelihood, int severity, string rationale,
@@ -50,6 +55,13 @@ public sealed class RiskService : IRiskService
         }
 
         await _db.SaveChangesAsync(ct);
+
+        if (!isResidual)
+            await _notify.NotifyUserAsync(hazard.ReportedById,
+                $"Hazard {hazard.ReferenceNo} assessed",
+                $"Your reported hazard was assessed: risk {assessment.RiskScoreValue} ({assessment.RiskLevel}).",
+                $"/Hazards/Details/{hazard.Id}", alsoEmail: true, ct);
+
         return (assessment.RiskScoreValue, assessment.RiskLevel);
     }
 }

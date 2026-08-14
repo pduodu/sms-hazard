@@ -12,11 +12,13 @@ public sealed class HazardService : IHazardService
 {
     private readonly AppDbContext _db;
     private readonly IAttachmentStorage _storage;
+    private readonly INotificationService _notify;
 
-    public HazardService(AppDbContext db, IAttachmentStorage storage)
+    public HazardService(AppDbContext db, IAttachmentStorage storage, INotificationService notify)
     {
         _db = db;
         _storage = storage;
+        _notify = notify;
     }
 
     public async Task<IReadOnlyList<LookupItem>> GetCategoriesAsync(CancellationToken ct = default) =>
@@ -64,6 +66,12 @@ public sealed class HazardService : IHazardService
 
         _db.HazardReports.Add(hazard);
         await _db.SaveChangesAsync(ct);
+
+        await _notify.NotifyRoleAsync("SafetyOfficer",
+            $"New hazard reported: {hazard.ReferenceNo}",
+            $"\"{hazard.Title}\" was reported and needs assessment.",
+            $"/Hazards/Details/{hazard.Id}", alsoEmail: true, ct);
+
         return (hazard.Id, hazard.ReferenceNo);
     }
 
