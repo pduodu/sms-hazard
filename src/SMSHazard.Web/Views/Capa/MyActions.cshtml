@@ -15,7 +15,7 @@ else
         <tbody>
         @foreach (var a in Model)
         {
-            <tr class="@(a.IsOverdue ? "bg-red-50" : "")">
+            <tr class="clickable-row @(a.IsOverdue ? "bg-red-50" : "")" data-row-href="@Url.Action("Details", "Hazards", new { id = a.HazardId })">
                 <td class="whitespace-nowrap"><a asp-controller="Hazards" asp-action="Details" asp-route-id="@a.HazardId">@a.HazardRef</a></td>
                 <td>@a.Description</td>
                 <td>@a.Type</td>

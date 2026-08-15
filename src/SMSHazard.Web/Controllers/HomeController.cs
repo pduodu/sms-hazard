@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using SMSHazard.Application.Interfaces;
+using SMSHazard.Infrastructure.Identity;
 
 namespace SMSHazard.Web.Controllers;
 
@@ -11,7 +12,11 @@ public class HomeController : Controller
 
     public async Task<IActionResult> Index(CancellationToken ct)
     {
-        var canSeeDashboard = User.IsInRole("SafetyOfficer") || User.IsInRole("Manager") || User.IsInRole("Admin");
+        var canSeeDashboard =
+            User.IsInRole(Roles.SafetyOfficer) ||
+            User.IsInRole(Roles.Manager) ||
+            User.IsInRole(Roles.Admin);
+
         return View(canSeeDashboard ? await _dashboard.GetAsync(ct) : null);
     }
 

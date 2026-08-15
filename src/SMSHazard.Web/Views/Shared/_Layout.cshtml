@@ -90,7 +90,7 @@ else
                 <a class="sidebar-link @Active("Capa","MyActions")" asp-controller="Capa" asp-action="MyActions"><i data-lucide="list-checks"></i> My actions</a>
                 @if (isStaff)
                 {
-                    <a class="sidebar-link @Active("Home")" asp-controller="Home" asp-action="Index"><i data-lucide="gauge"></i> Dashboard</a>
+                    @* <a class="sidebar-link @Active("Home")" asp-controller="Home" asp-action="Index"><i data-lucide="gauge"></i> Dashboard</a> *@
                     <a class="sidebar-link @Active("Hazards","Index")" asp-controller="Hazards" asp-action="Index"><i data-lucide="clipboard-list"></i> Risk register</a>
                 }
                 @if (User.IsInRole("Admin"))
@@ -199,8 +199,9 @@ else
 
         // Searchable selects
         if (window.jQuery && jQuery.fn.select2) {
-            jQuery('select:not([data-select2="off"])').each(function () {
+            jQuery('select:not([data-select2="off"])').not('.flatpickr-monthDropdown-months').each(function () {
                 var $select = jQuery(this);
+                if ($select.closest('.flatpickr-calendar').length) return;
                 if ($select.hasClass('select2-hidden-accessible')) return;
                 var placeholder = $select.find('option[value=""]').first().text() || $select.attr('placeholder') || 'Select an option';
                 var compact = $select.hasClass('btn-sm') || $select.hasClass('!w-auto') || $select.data('select2Width') === 'auto';
@@ -214,6 +215,13 @@ else
                 $select.next('.select2-container').toggleClass('select2-compact', compact);
             });
         }
+
+        document.addEventListener('click', function (ev) {
+            var row = ev.target.closest('tr[data-row-href]');
+            if (!row || ev.target.closest('a, button, input, select, textarea, label, [role="button"]')) return;
+            var href = row.getAttribute('data-row-href');
+            if (href) window.location.href = href;
+        });
 
         // DataTables
         if (window.jQuery && jQuery.fn.dataTable) {

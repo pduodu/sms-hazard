@@ -88,6 +88,8 @@
     .table thead th { @apply px-3 py-2 font-semibold text-slate-500 border-b whitespace-nowrap; border-color: #e6eaf0; background: #f8fbfe; }
     .table tbody td { @apply px-3 py-2 border-b border-slate-100 align-middle; }
     .table-hover tbody tr { transition: background-color 140ms ease; }
+    .table tbody tr.clickable-row { cursor: pointer; }
+    .table tbody tr.clickable-row:focus-within, .table-hover tbody tr.clickable-row:hover { background-color: rgba(232,244,252,.72); }
     .table-hover tbody tr:hover { background-color: #f4f9fd; }
 
     /* Alerts */
@@ -216,7 +218,13 @@
 .select2-container--default .select2-selection--multiple .select2-selection__choice { border: 1px solid #cfe6f7; border-radius: 999px; background: #e8f4fc; color: #045c9d; }
 .flatpickr-calendar { overflow: hidden; border: 1px solid rgba(207,230,247,.95); border-radius: .85rem; box-shadow: 0 18px 38px rgba(1,49,97,.14); font-family: inherit; }
 .flatpickr-months, .flatpickr-weekdays { background: linear-gradient(135deg, #1086d4 0%, #045c9d 58%, #013161 100%); }
+.flatpickr-current-month { display: flex; align-items: center; justify-content: center; gap: .35rem; left: 15%; width: 70%; height: 34px; padding: 6px 0 0; }
 .flatpickr-months .flatpickr-month, .flatpickr-current-month, .flatpickr-current-month .flatpickr-monthDropdown-months, .flatpickr-current-month input.cur-year, span.flatpickr-weekday { color: #fff; fill: #fff; }
+.flatpickr-current-month .flatpickr-monthDropdown-months, .flatpickr-current-month input.cur-year { height: 1.75rem; border: 1px solid rgba(207,230,247,.45); border-radius: .55rem; background: rgba(255,255,255,.14); font-size: .92rem; font-weight: 700; line-height: 1.75rem; }
+.flatpickr-current-month .flatpickr-monthDropdown-months { width: 7.75rem; padding: 0 1.65rem 0 .75rem; }
+.flatpickr-current-month .numInputWrapper { width: 4.75rem; }
+.flatpickr-current-month input.cur-year { width: 100%; padding: 0 .5rem; text-align: center; }
+.flatpickr-current-month .flatpickr-monthDropdown-months option { color: #0f172a; }
 .flatpickr-months .flatpickr-prev-month, .flatpickr-months .flatpickr-next-month { color: #fff; fill: #fff; }
 .flatpickr-months .flatpickr-prev-month:hover svg, .flatpickr-months .flatpickr-next-month:hover svg { fill: #cfe6f7; }
 .flatpickr-day { border-radius: .55rem; }
@@ -316,7 +324,7 @@ body.session-modal-open { overflow: hidden; }
 .action-card-link { display: inline-flex; align-items: center; gap: .4rem; color: #045c9d; font-size: .82rem; font-weight: 800; }
 .action-card-link:hover, .action-card-link:focus-visible { color: #013161; text-decoration: underline; outline: none; }
 .risk-assessment-panel { min-width: 0; }
-.risk-result { --risk-color: #045c9d; --risk-border: #cfe6f7; --risk-soft: #e8f4fc; display: flex; align-items: center; justify-content: space-between; gap: .75rem; min-height: 2.55rem; border: 1px solid var(--risk-border); border-radius: .65rem; padding: .55rem .7rem; background: var(--risk-soft); color: var(--risk-color); }
+.risk-result { display: flex; align-items: center; justify-content: space-between; gap: .75rem; min-height: 2.55rem; border: 1px solid var(--risk-border,#cfe6f7); border-radius: .65rem; padding: .55rem .7rem; background: var(--risk-soft,#e8f4fc); color: var(--risk-color,#045c9d); }
 .risk-result span { font-size: 1.25rem; line-height: 1; font-weight: 900; }
 .risk-result small { font-size: .76rem; font-weight: 800; }
 .risk-matrix-wrap { margin-top: 1rem; border: 1px solid rgba(207,230,247,.85); border-radius: .85rem; padding: .9rem; background: #f8fbfe; }
@@ -324,6 +332,7 @@ body.session-modal-open { overflow: hidden; }
 .risk-matrix th, .risk-matrix td { min-width: 3rem; border: 1px solid var(--risk-border,#e2e8f0); border-radius: .55rem; padding: .45rem .55rem; background: var(--risk-soft,#fff); color: var(--risk-color,#334155); font-size: .8rem; font-weight: 800; }
 .risk-matrix th { background: #fff; color: #64748b; }
 .risk-matrix td.is-selected { box-shadow: 0 0 0 3px rgba(4,92,157,.18); outline: 2px solid var(--risk-color); outline-offset: 1px; }
+.card, .card:hover, .metric-card, .auth-card, .start-card, .start-card:hover, .chart-card, .risk-heatmap, .hazard-score-card, .detail-section-card, .detail-side-card, .assessment-card, .action-card, .attachment-item, .attachment-item:hover, .detail-nav-button, .detail-nav-button:hover, .session-timeout-card { box-shadow: none !important; filter: none !important; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (min-width: 1024px) { .hazard-hero-grid { grid-template-columns: minmax(0, 1fr) 12rem; align-items: start; } .hazard-detail-layout { grid-template-columns: minmax(0, 1fr) 22rem; align-items: start; } .hazard-detail-sidebar { position: sticky; top: 5rem; } .hazard-score-card { width: 12rem; } }
 @media (max-width: 640px) { .hazard-detail-title { font-size: 1.25rem; } .detail-row { grid-template-columns: 1fr; gap: .25rem; } .detail-row dd { text-align: left; } }

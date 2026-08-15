@@ -16,8 +16,9 @@
         }
 
         if (window.jQuery && jQuery.fn.select2) {
-            jQuery(root).find('select:not([data-select2="off"])').each(function () {
+            jQuery(root).find('select:not([data-select2="off"])').not('.flatpickr-monthDropdown-months').each(function () {
                 var $select = jQuery(this);
+                if ($select.closest('.flatpickr-calendar').length) return;
                 if ($select.hasClass('select2-hidden-accessible')) return;
                 var placeholder = $select.find('option[value=""]').first().text() || $select.attr('placeholder') || 'Select an option';
                 $select.select2({

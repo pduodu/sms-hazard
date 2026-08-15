@@ -135,6 +135,15 @@ a:hover,
     transition: background-color 140ms ease;
 }
 
+.table tbody tr.clickable-row {
+    cursor: pointer;
+}
+
+.table tbody tr.clickable-row:focus-within,
+.table-hover tbody tr.clickable-row:hover {
+    background-color: rgba(232, 244, 252, .72);
+}
+
 .table-hover tbody tr:hover {
     background-color: #f4f9fd;
 }
@@ -745,6 +754,17 @@ a:hover,
     background: linear-gradient(135deg, #1086d4 0%, #045c9d 58%, #013161 100%);
 }
 
+.flatpickr-current-month {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .35rem;
+    left: 15%;
+    width: 70%;
+    height: 34px;
+    padding: 6px 0 0;
+}
+
 .flatpickr-months .flatpickr-month,
 .flatpickr-current-month,
 .flatpickr-current-month .flatpickr-monthDropdown-months,
@@ -752,6 +772,36 @@ a:hover,
 span.flatpickr-weekday {
     color: #fff;
     fill: #fff;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months,
+.flatpickr-current-month input.cur-year {
+    height: 1.75rem;
+    border: 1px solid rgba(207, 230, 247, .45);
+    border-radius: .55rem;
+    background: rgba(255, 255, 255, .14);
+    font-size: .92rem;
+    font-weight: 700;
+    line-height: 1.75rem;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+    width: 7.75rem;
+    padding: 0 1.65rem 0 .75rem;
+}
+
+.flatpickr-current-month .numInputWrapper {
+    width: 4.75rem;
+}
+
+.flatpickr-current-month input.cur-year {
+    width: 100%;
+    padding: 0 .5rem;
+    text-align: center;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months option {
+    color: #0f172a;
 }
 
 .flatpickr-months .flatpickr-prev-month,
@@ -1518,19 +1568,16 @@ body.session-modal-open {
 }
 
 .risk-result {
-    --risk-color: var(--sms-blue-700);
-    --risk-border: var(--sms-blue-100);
-    --risk-soft: var(--sms-blue-50);
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: .75rem;
     min-height: 2.55rem;
-    border: 1px solid var(--risk-border);
+    border: 1px solid var(--risk-border, var(--sms-blue-100));
     border-radius: .65rem;
     padding: .55rem .7rem;
-    background: var(--risk-soft);
-    color: var(--risk-color);
+    background: var(--risk-soft, var(--sms-blue-50));
+    color: var(--risk-color, var(--sms-blue-700));
 }
 
 .risk-result span {
@@ -1581,6 +1628,28 @@ body.session-modal-open {
     box-shadow: 0 0 0 3px rgba(4, 92, 157, .18);
     outline: 2px solid var(--risk-color);
     outline-offset: 1px;
+}
+
+.card,
+.card:hover,
+.metric-card,
+.auth-card,
+.start-card,
+.start-card:hover,
+.chart-card,
+.risk-heatmap,
+.hazard-score-card,
+.detail-section-card,
+.detail-side-card,
+.assessment-card,
+.action-card,
+.attachment-item,
+.attachment-item:hover,
+.detail-nav-button,
+.detail-nav-button:hover,
+.session-timeout-card {
+    box-shadow: none !important;
+    filter: none !important;
 }
 
 @keyframes spin {

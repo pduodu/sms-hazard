@@ -1,7 +1,11 @@
 @model DashboardDto?
 @{
     ViewData["Title"] = "Home";
-    var hasDashboard = Model is not null;
+    var canSeeOperationalDashboard =
+        User.IsInRole(Roles.SafetyOfficer) ||
+        User.IsInRole(Roles.Manager) ||
+        User.IsInRole(Roles.Admin);
+    var hasDashboard = canSeeOperationalDashboard && Model is not null;
 }
 
 <section class="home-hero card mb-6">

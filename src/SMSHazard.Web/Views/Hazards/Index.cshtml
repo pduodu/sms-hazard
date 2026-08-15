@@ -41,7 +41,7 @@ else
             <tbody>
             @foreach (var h in Model.Items)
             {
-                <tr>
+                <tr class="clickable-row" data-row-href="@Url.Action("Details", "Hazards", new { id = h.Id })">
                     <td class="whitespace-nowrap"><a asp-action="Details" asp-route-id="@h.Id">@h.ReferenceNo</a></td>
                     <td>@h.Title</td>
                     <td>@h.CategoryName</td>

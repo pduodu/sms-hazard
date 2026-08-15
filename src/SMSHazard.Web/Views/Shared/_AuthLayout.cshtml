@@ -57,8 +57,9 @@
         });
     }
     if (window.jQuery && jQuery.fn.select2) {
-        jQuery('select:not([data-select2="off"])').each(function () {
+        jQuery('select:not([data-select2="off"])').not('.flatpickr-monthDropdown-months').each(function () {
             var $select = jQuery(this);
+            if ($select.closest('.flatpickr-calendar').length) return;
             if ($select.hasClass('select2-hidden-accessible')) return;
             var placeholder = $select.find('option[value=""]').first().text() || $select.attr('placeholder') || 'Select an option';
             var compact = $select.hasClass('btn-sm') || $select.hasClass('!w-auto') || $select.data('select2Width') === 'auto';
