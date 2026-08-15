@@ -2,13 +2,14 @@
 @{
     ViewData["Title"] = "My profile";
 }
-@if (TempData["Success"] is string ok) { <div class="alert alert-success">@ok</div> }
-<h2 class="mb-3">My profile</h2>
-<div class="card" style="max-width:520px"><div class="card-body">
-    <dl class="row mb-0">
-        <dt class="col-4">Name</dt><dd class="col-8">@Model.FullName</dd>
-        <dt class="col-4">Email</dt><dd class="col-8">@Model.Email</dd>
-        <dt class="col-4">Role(s)</dt><dd class="col-8">@Model.Roles</dd>
+<div class="card max-w-lg"><div class="card-body">
+    <dl class="divide-y divide-slate-100">
+        <div class="dl-row"><dt>Name</dt><dd>@Model.FullName</dd></div>
+        <div class="dl-row"><dt>Email</dt><dd>@Model.Email</dd></div>
+        <div class="dl-row"><dt>Role(s)</dt><dd>@Model.Roles</dd></div>
     </dl>
 </div></div>
-<a class="btn btn-outline-primary mt-3" asp-action="ChangePassword">Change password</a>
+<div class="flex flex-wrap gap-2 mt-4">
+    <a class="btn-outline-primary" asp-action="ChangePassword">Change password</a>
+    <a class="btn-outline" asp-action="TwoFactor"><i data-lucide="shield-check"></i> Two-factor authentication</a>
+</div>

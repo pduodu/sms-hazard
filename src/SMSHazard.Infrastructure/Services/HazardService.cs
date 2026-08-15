@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.EntityFrameworkCore;
 using SMSHazard.Application.DTOs;
 using SMSHazard.Application.Interfaces;
@@ -84,6 +86,93 @@ public sealed class HazardService : IHazardService
         return $"{prefix}{(count + 1):D4}";
     }
 
+    public async Task<(int Id, string ReferenceNo, string TrackingCode)> CreateAnonymousAsync(
+        CreateHazardRequest request, IReadOnlyList<AttachmentUpload> attachments, CancellationToken ct = default)
+    {
+        var now = DateTime.UtcNow;
+        var referenceNo = await GenerateReferenceNoAsync(now.Year, ct);
+        var trackingCode = await GenerateTrackingCodeAsync(ct);
+
+        var hazard = new HazardReport
+        {
+            ReferenceNo = referenceNo,
+            Title = request.Title.Trim(),
+            Description = request.Description.Trim(),
+            HazardCategoryId = request.HazardCategoryId,
+            DepartmentId = request.DepartmentId,
+            ReportedById = string.Empty,   // no authenticated user
+            IsAnonymous = true,
+            TrackingCode = trackingCode,
+            ReportedDate = now,
+            OccurrenceDate = request.OccurrenceDate,
+            ImmediateActionTaken = request.ImmediateActionTaken?.Trim(),
+            CreatedAt = now
+        };
+
+        foreach (var upload in attachments)
+        {
+            var key = await _storage.SaveAsync(upload, ct);
+            hazard.Attachments.Add(new Attachment
+            {
+                FileName = Path.GetFileName(upload.FileName),
+                ContentType = upload.ContentType,
+                SizeBytes = upload.Length,
+                StorageKey = key,
+                UploadedById = string.Empty,
+                CreatedAt = now
+            });
+        }
+
+        _db.HazardReports.Add(hazard);
+        await _db.SaveChangesAsync(ct);
+
+        await _notify.NotifyRoleAsync("SafetyOfficer",
+            $"New anonymous hazard reported: {hazard.ReferenceNo}",
+            $"\"{hazard.Title}\" was submitted anonymously and needs assessment.",
+            $"/Hazards/Details/{hazard.Id}", alsoEmail: true, ct);
+
+        return (hazard.Id, hazard.ReferenceNo, trackingCode);
+    }
+
+    public async Task<PublicTrackDto?> TrackAsync(string trackingCode, CancellationToken ct = default)
+    {
+        var code = (trackingCode ?? string.Empty).Trim().ToUpperInvariant();
+        if (code.Length == 0) return null;
+
+        return await _db.HazardReports.AsNoTracking()
+            .Where(h => h.TrackingCode == code)
+            .Select(h => new PublicTrackDto
+            {
+                ReferenceNo = h.ReferenceNo,
+                Title = h.Title,
+                CategoryName = h.HazardCategory!.Name,
+                DepartmentName = h.Department!.Name,
+                Status = h.Status,
+                ReportedDate = h.ReportedDate,
+                CurrentRiskLevel = h.Assessments.OrderByDescending(a => a.AssessedDate)
+                    .Select(a => (RiskLevel?)a.RiskLevel).FirstOrDefault()
+            })
+            .FirstOrDefaultAsync(ct);
+    }
+
+    // Unambiguous alphabet (no 0/O/1/I) for human-readable tracking codes, e.g. TR-7K9F2Q4M.
+    private static readonly char[] CodeAlphabet = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ".ToCharArray();
+
+    private async Task<string> GenerateTrackingCodeAsync(CancellationToken ct)
+    {
+        for (var attempt = 0; attempt < 8; attempt++)
+        {
+            var bytes = RandomNumberGenerator.GetBytes(8);
+            var sb = new StringBuilder("TR-");
+            foreach (var b in bytes) sb.Append(CodeAlphabet[b % CodeAlphabet.Length]);
+            var code = sb.ToString();
+            if (!await _db.HazardReports.AnyAsync(h => h.TrackingCode == code, ct))
+                return code;
+        }
+        // Extremely unlikely; fall back to a GUID-derived code.
+        return "TR-" + Guid.NewGuid().ToString("N")[..10].ToUpperInvariant();
+    }
+
     public async Task<IReadOnlyList<HazardListItemDto>> ListAsync(HazardFilter filter, CancellationToken ct = default)
     {
         var today = DateTime.UtcNow.Date;
@@ -137,6 +226,8 @@ public sealed class HazardService : IHazardService
                 OccurrenceDate = h.OccurrenceDate,
                 ImmediateActionTaken = h.ImmediateActionTaken,
                 Status = h.Status,
+                IsAnonymous = h.IsAnonymous,
+                TrackingCode = h.TrackingCode,
                 Assessments = h.Assessments.OrderBy(a => a.AssessedDate).Select(a => new AssessmentDto
                 {
                     Likelihood = a.Likelihood,

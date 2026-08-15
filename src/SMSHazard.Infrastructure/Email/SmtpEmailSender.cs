@@ -40,7 +40,7 @@ public sealed class SmtpEmailSender : IEmailSender
             message.Body = new BodyBuilder { HtmlBody = htmlBody }.ToMessageBody();
 
             using var client = new SmtpClient();
-            await client.ConnectAsync(_settings.Host, _settings.Port, SecureSocketOptions.StartTls, ct);
+            await client.ConnectAsync(_settings.Host, _settings.Port, ResolveSecurity(_settings.Security), ct);
             if (!string.IsNullOrEmpty(_settings.User))
                 await client.AuthenticateAsync(_settings.User, _settings.Password, ct);
             await client.SendAsync(message, ct);
@@ -51,4 +51,19 @@ public sealed class SmtpEmailSender : IEmailSender
             _logger.LogError(ex, "Failed to send email to {To} ({Subject})", to, subject);
         }
     }
+
+    /// <summary>
+    /// Maps the configured security mode to MailKit's option. Defaults to Auto, which negotiates
+    /// the right transport per server/port — so a plain local test server and Mailjet both work
+    /// without code changes.
+    /// </summary>
+    private static SecureSocketOptions ResolveSecurity(string? mode) =>
+        (mode ?? "Auto").Trim().ToLowerInvariant() switch
+        {
+            "none" => SecureSocketOptions.None,
+            "ssl" or "sslonconnect" => SecureSocketOptions.SslOnConnect,
+            "starttls" => SecureSocketOptions.StartTls,
+            "starttlswhenavailable" => SecureSocketOptions.StartTlsWhenAvailable,
+            _ => SecureSocketOptions.Auto
+        };
 }

@@ -9,4 +9,10 @@ public sealed class EmailSettings
     public string Password { get; set; } = string.Empty;
     public string From { get; set; } = string.Empty;
     public string FromName { get; set; } = "SMS-Hazard";
+
+    /// <summary>
+    /// Transport security: Auto (default, negotiates per server/port), None, StartTls,
+    /// StartTlsWhenAvailable, or SslOnConnect. Mailjet uses StartTls on 587 or SslOnConnect on 465.
+    /// </summary>
+    public string Security { get; set; } = "Auto";
 }

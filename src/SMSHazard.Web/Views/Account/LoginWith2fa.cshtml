@@ -1,0 +1,27 @@
+@model SMSHazard.Web.Models.LoginWith2faViewModel
+@{
+    ViewData["Title"] = "Two-factor sign in";
+    Layout = "_AuthLayout";
+}
+<h4 class="text-lg font-semibold text-slate-900 mb-2">Two-factor authentication</h4>
+<p class="text-sm text-slate-500 mb-4">Enter the 6-digit code from your authenticator app.</p>
+<form asp-action="LoginWith2fa" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="space-y-4">
+    <input type="hidden" asp-for="RememberMe" />
+    <input type="hidden" asp-for="ReturnUrl" />
+    <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+    <div>
+        <label asp-for="TwoFactorCode" class="label"></label>
+        <input asp-for="TwoFactorCode" class="input font-mono tracking-widest text-center" autocomplete="one-time-code"
+               inputmode="numeric" placeholder="123456" autofocus />
+        <span asp-validation-for="TwoFactorCode" class="field-error"></span>
+    </div>
+    <div class="form-check">
+        <input asp-for="RememberMachine" class="rounded border-slate-300 text-primary focus:ring-primary" />
+        <label asp-for="RememberMachine" class="text-sm text-slate-700"></label>
+    </div>
+    <button type="submit" class="btn-primary w-full">Verify</button>
+</form>
+<div class="text-center mt-4">
+    <a class="text-sm" asp-action="LoginWithRecoveryCode" asp-route-returnUrl="@Model.ReturnUrl">Use a recovery code instead</a>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

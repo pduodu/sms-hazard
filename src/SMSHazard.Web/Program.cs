@@ -1,8 +1,11 @@
+using System.Threading.RateLimiting;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using SMSHazard.Application;
 using SMSHazard.Application.Interfaces;
@@ -12,6 +15,11 @@ using SMSHazard.Infrastructure.Persistence;
 using SMSHazard.Web.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Keep local/dev runs independent of Windows Event Log permissions.
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
 
 // --- Kestrel binds to loopback; Apache is the public face (see vps-deploy-plan V5/V6).
 // In Production, ASPNETCORE_URLS from the systemd env file drives the bind; this keeps
@@ -62,9 +70,47 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.LoginPath = "/Account/Login";
     options.LogoutPath = "/Account/Logout";
     options.AccessDeniedPath = "/Account/AccessDenied";
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+    options.SlidingExpiration = true;
 });
 
 builder.Services.AddControllersWithViews();
+
+// --- Rate limiting (AUTH-02): throttle credential and public-submission endpoints per client IP.
+// Behind Apache, the real client IP comes from the forwarded headers processed above.
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    static string ClientKey(HttpContext ctx) =>
+        ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+    // Sign-in / password endpoints: 5 attempts per minute per IP.
+    options.AddPolicy("auth", ctx => RateLimitPartition.GetFixedWindowLimiter(
+        ClientKey(ctx), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 5,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0
+        }));
+
+    // Anonymous public submissions: 10 per 10 minutes per IP.
+    options.AddPolicy("public-submit", ctx => RateLimitPartition.GetFixedWindowLimiter(
+        ClientKey(ctx), _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 10,
+            Window = TimeSpan.FromMinutes(10),
+            QueueLimit = 0
+        }));
+
+    options.OnRejected = async (context, token) =>
+    {
+        context.HttpContext.Response.Headers.RetryAfter = "60";
+        context.HttpContext.Response.ContentType = "text/plain";
+        await context.HttpContext.Response.WriteAsync(
+            "Too many attempts. Please wait a minute and try again.", token);
+    };
+});
 
 // --- Hangfire: durable, PostgreSQL-backed recurring reminders + background email.
 var hangfireConn = builder.Configuration.GetConnectionString("Default");
@@ -89,6 +135,7 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 
 // Hangfire dashboard, gated to Admins (after auth so User is populated).
 app.UseHangfireDashboard("/hangfire", new DashboardOptions
@@ -117,5 +164,11 @@ RecurringJob.AddOrUpdate<IReminderService>(
     "capa-reminders",
     svc => svc.ProcessDueRemindersAsync(),
     Cron.Hourly());
+
+// Register the monthly safety-digest job (ADM-02): 1st of each month at 07:00 UTC.
+RecurringJob.AddOrUpdate<IDigestService>(
+    "monthly-digest",
+    svc => svc.SendMonthlyDigestAsync(),
+    "0 7 1 * *");
 
 app.Run();

@@ -1,0 +1,137 @@
+@model SMSHazard.Web.Models.Settings.SettingsViewModel
+@{
+    ViewData["Title"] = "Settings";
+}
+<div x-data="{ tab: 'general' }" class="max-w-4xl">
+    <div class="flex gap-1 border-b border-slate-200 mb-5">
+        <button type="button" @@click="tab='general'"
+                :class="tab==='general' ? 'border-primary text-primary' : 'border-transparent text-slate-500 hover:text-slate-700'"
+                class="px-4 py-2 text-sm font-medium border-b-2 -mb-px">General</button>
+        <button type="button" @@click="tab='branding'"
+                :class="tab==='branding' ? 'border-primary text-primary' : 'border-transparent text-slate-500 hover:text-slate-700'"
+                class="px-4 py-2 text-sm font-medium border-b-2 -mb-px">Branding</button>
+        <button type="button" @@click="tab='logs'"
+                :class="tab==='logs' ? 'border-primary text-primary' : 'border-transparent text-slate-500 hover:text-slate-700'"
+                class="px-4 py-2 text-sm font-medium border-b-2 -mb-px">Activity log</button>
+    </div>
+
+    <form asp-action="Index" method="post" enctype="multipart/form-data">
+        <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+        <!-- General -->
+        <div x-show="tab==='general'" class="space-y-4">
+            <div class="card"><div class="card-body space-y-4">
+                <h5 class="card-title">Organisation</h5>
+                <div>
+                    <label asp-for="OrganizationName" class="label"></label>
+                    <input asp-for="OrganizationName" class="input max-w-md" />
+                    <span asp-validation-for="OrganizationName" class="field-error"></span>
+                </div>
+                <div>
+                    <label asp-for="SupportEmail" class="label"></label>
+                    <input asp-for="SupportEmail" class="input max-w-md" placeholder="safety@example.com" />
+                    <span asp-validation-for="SupportEmail" class="field-error"></span>
+                </div>
+            </div></div>
+
+            <div class="card"><div class="card-body">
+                <h5 class="card-title">Features</h5>
+                <label class="flex items-start gap-3 cursor-pointer">
+                    <input asp-for="AllowAnonymousReporting" class="mt-1 rounded border-slate-300 text-primary focus:ring-primary" />
+                    <span>
+                        <span class="font-medium text-slate-800">Allow anonymous public reporting</span>
+                        <span class="block text-sm text-slate-500">When off, the public "Report a hazard" and "Track a report" pages are disabled.</span>
+                    </span>
+                </label>
+            </div></div>
+        </div>
+
+        <!-- Branding -->
+        <div x-show="tab==='branding'" x-cloak class="space-y-4">
+            <div class="card"><div class="card-body space-y-4">
+                <h5 class="card-title">Logo</h5>
+                <div class="flex items-center gap-4">
+                    <div class="w-16 h-16 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden">
+                        @if (!string.IsNullOrEmpty(Model.LogoPath))
+                        {
+                            <img src="@Model.LogoPath" alt="Current logo" class="max-w-full max-h-full" />
+                        }
+                        else
+                        {
+                            <i data-lucide="shield-check" class="text-3xl text-primary"></i>
+                        }
+                    </div>
+                    <div>
+                        <div class="text-sm text-slate-600">@(string.IsNullOrEmpty(Model.LogoPath) ? "Using the default icon." : "Custom logo in use.")</div>
+                        @if (!string.IsNullOrEmpty(Model.LogoPath))
+                        {
+                            <button type="submit" asp-action="RemoveLogo" class="btn-outline btn-sm mt-2">Remove logo</button>
+                        }
+                    </div>
+                </div>
+                <div>
+                    <label asp-for="LogoFile" class="label"></label>
+                    <input asp-for="LogoFile" type="file" class="input max-w-md" accept=".png,.jpg,.jpeg,.webp,.svg" />
+                    <div class="text-slate-500 text-xs mt-1">PNG, JPG, WEBP or SVG, up to 2 MB. Shown in the sidebar and on the sign-in page.</div>
+                    <span asp-validation-for="LogoFile" class="field-error"></span>
+                </div>
+            </div></div>
+        </div>
+
+        <!-- Logs -->
+        <div x-show="tab==='logs'" x-cloak class="space-y-4">
+            <div class="card"><div class="card-body flex items-center justify-between gap-3">
+                <div>
+                    <div class="font-medium text-slate-800">Monthly safety digest</div>
+                    <div class="text-sm text-slate-500">Runs automatically on the 1st of each month. Send it now to managers and admins for a test.</div>
+                </div>
+                <button type="submit" asp-action="SendDigestNow" class="btn-outline whitespace-nowrap"><i data-lucide="mail"></i> Send now</button>
+            </div></div>
+            <div class="grid gap-4 sm:grid-cols-3">
+                <div class="card"><div class="card-body">
+                    <div class="text-sm text-slate-500">Environment</div>
+                    <div class="text-lg font-semibold text-slate-900">@Model.EnvironmentName</div>
+                </div></div>
+                <div class="card"><div class="card-body">
+                    <div class="text-sm text-slate-500">App version</div>
+                    <div class="text-lg font-semibold text-slate-900">@Model.AppVersion</div>
+                </div></div>
+                <div class="card"><div class="card-body">
+                    <div class="text-sm text-slate-500">Server time (UTC)</div>
+                    <div class="text-lg font-semibold text-slate-900">@Model.ServerTimeUtc.ToString("dd MMM HH:mm:ss")</div>
+                </div></div>
+            </div>
+            <div class="card"><div class="card-body overflow-x-auto">
+                <h5 class="card-title">Recent activity</h5>
+                @if (!Model.RecentLogs.Any())
+                {
+                    <p class="text-slate-500">No activity recorded yet.</p>
+                }
+                else
+                {
+                    <table class="table">
+                        <thead><tr><th>When</th><th>Entity</th><th>Action</th><th>By</th></tr></thead>
+                        <tbody>
+                        @foreach (var a in Model.RecentLogs)
+                        {
+                            <tr>
+                                <td class="whitespace-nowrap">@a.Timestamp.ToString("dd MMM HH:mm")</td>
+                                <td>@a.EntityName #@a.EntityId</td>
+                                <td><span class="badge @(a.Action == "Created" ? "badge-green" : a.Action == "Deleted" ? "badge-red" : "badge-gray")">@a.Action</span></td>
+                                <td>@a.ChangedByName</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                    <a class="btn-outline btn-sm mt-3" asp-controller="Audit" asp-action="Index">Full audit log</a>
+                }
+            </div></div>
+        </div>
+
+        <div class="mt-5">
+            <button type="submit" class="btn-primary">Save settings</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

@@ -1,0 +1,38 @@
+@model SMSHazard.Web.Models.Capa.CreateCapaViewModel
+
+<form asp-action="Create" method="post" data-capa-drawer-form>
+    <input type="hidden" asp-for="HazardId" />
+    <input type="hidden" asp-for="ReferenceNo" />
+    <input type="hidden" asp-for="Title" />
+    <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+    <div class="grid gap-4 sm:grid-cols-3">
+        <div class="sm:col-span-3">
+            <label asp-for="Description" class="label"></label>
+            <textarea asp-for="Description" class="textarea" rows="4"
+                      placeholder="What must be done to mitigate this hazard?"></textarea>
+            <span asp-validation-for="Description" class="field-error"></span>
+        </div>
+        <div>
+            <label asp-for="Type" class="label"></label>
+            <select asp-for="Type" asp-items="Html.GetEnumSelectList<SMSHazard.Domain.Enums.CapaType>()" class="select"></select>
+        </div>
+        <div>
+            <label asp-for="AssignedToId" class="label"></label>
+            <select asp-for="AssignedToId" asp-items="Model.Owners" class="select">
+                <option value="">-- select owner --</option>
+            </select>
+            <span asp-validation-for="AssignedToId" class="field-error"></span>
+        </div>
+        <div>
+            <label asp-for="DueDate" class="label"></label>
+            <input asp-for="DueDate" type="date" class="input" />
+            <span asp-validation-for="DueDate" class="field-error"></span>
+        </div>
+    </div>
+
+    <div class="capa-drawer-actions">
+        <button type="submit" class="btn-primary"><i data-lucide="list-plus"></i>Assign action</button>
+        <a class="btn-outline" asp-controller="Hazards" asp-action="Details" asp-route-id="@Model.HazardId" data-capa-drawer-close>Cancel</a>
+    </div>
+</form>

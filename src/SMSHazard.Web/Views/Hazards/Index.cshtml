@@ -2,44 +2,36 @@
 @{
     ViewData["Title"] = Model.Heading;
 }
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="mb-0">@Model.Heading</h2>
-    <a class="btn btn-primary" asp-action="Create">+ Report hazard</a>
+<div class="flex justify-between items-center mb-4">
+    <h2 class="text-xl font-semibold text-slate-900">@Model.Heading</h2>
+    <a class="btn-primary" asp-action="Create">+ Report hazard</a>
 </div>
 
 @if (Model.ShowFilters)
 {
-    <form method="get" asp-action="Index" class="row g-2 mb-3">
-        <div class="col-auto">
-            <select name="Status" class="form-select form-select-sm" asp-items="Html.GetEnumSelectList<HazardStatus>()">
-                <option value="">All statuses</option>
-            </select>
-        </div>
-        <div class="col-auto">
-            <select name="RiskLevel" class="form-select form-select-sm" asp-items="Html.GetEnumSelectList<RiskLevel>()">
-                <option value="">All risk levels</option>
-            </select>
-        </div>
-        <div class="col-auto">
-            <select name="DepartmentId" class="form-select form-select-sm" asp-items="Model.Departments">
-                <option value="">All departments</option>
-            </select>
-        </div>
-        <div class="col-auto">
-            <button type="submit" class="btn btn-sm btn-outline-secondary">Filter</button>
-            <a class="btn btn-sm btn-outline-secondary" asp-action="Index">Reset</a>
-        </div>
+    <form method="get" asp-action="Index" class="flex flex-wrap gap-2 mb-4">
+        <select name="Status" class="select btn-sm !w-auto" asp-items="Html.GetEnumSelectList<HazardStatus>()">
+            <option value="">All statuses</option>
+        </select>
+        <select name="RiskLevel" class="select btn-sm !w-auto" asp-items="Html.GetEnumSelectList<RiskLevel>()">
+            <option value="">All risk levels</option>
+        </select>
+        <select name="DepartmentId" class="select btn-sm !w-auto" asp-items="Model.Departments">
+            <option value="">All departments</option>
+        </select>
+        <button type="submit" class="btn-outline btn-sm">Filter</button>
+        <a class="btn-outline btn-sm" asp-action="Index">Reset</a>
     </form>
 }
 
 @if (!Model.Items.Any())
 {
-    <div class="alert alert-light border">No hazards found.</div>
+    <div class="alert alert-muted">No hazards found.</div>
 }
 else
 {
-    <div class="table-responsive">
-        <table class="table table-hover align-middle">
+    <div class="card"><div class="card-body overflow-x-auto">
+        <table class="table table-hover" data-datatable>
             <thead>
                 <tr>
                     <th>Ref</th><th>Title</th><th>Category</th><th>Department</th>
@@ -50,7 +42,7 @@ else
             @foreach (var h in Model.Items)
             {
                 <tr>
-                    <td class="text-nowrap"><a asp-action="Details" asp-route-id="@h.Id">@h.ReferenceNo</a></td>
+                    <td class="whitespace-nowrap"><a asp-action="Details" asp-route-id="@h.Id">@h.ReferenceNo</a></td>
                     <td>@h.Title</td>
                     <td>@h.CategoryName</td>
                     <td>@h.DepartmentName</td>
@@ -61,20 +53,20 @@ else
                         }
                         else
                         {
-                            <span class="text-muted small">not assessed</span>
+                            <span class="text-slate-400 text-xs">not assessed</span>
                         }
                     </td>
                     <td><span class="badge @HazardDisplay.StatusCss(h.Status)">@HazardDisplay.StatusText(h.Status)</span></td>
-                    <td class="text-nowrap">@h.ReportedDate.ToString("dd MMM yyyy")</td>
+                    <td class="whitespace-nowrap">@h.ReportedDate.ToString("dd MMM yyyy")</td>
                     <td>
                         @if (h.OverdueCount > 0)
                         {
-                            <span class="badge bg-danger" title="Overdue corrective actions">@h.OverdueCount overdue</span>
+                            <span class="badge badge-red" title="Overdue corrective actions">@h.OverdueCount overdue</span>
                         }
                     </td>
                 </tr>
             }
             </tbody>
         </table>
-    </div>
+    </div></div>
 }

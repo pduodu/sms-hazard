@@ -96,4 +96,42 @@ public class UsersController : Controller
         TempData["Success"] = $"User {user.Email} updated.";
         return RedirectToAction(nameof(Index));
     }
+
+    // ---- Admin-triggered password reset (UM-01) ----
+    [HttpGet]
+    public async Task<IActionResult> ResetPassword(string id)
+    {
+        var user = await _users.FindByIdAsync(id);
+        if (user is null) return NotFound();
+        return View(new AdminResetPasswordViewModel
+        {
+            Id = user.Id,
+            FullName = user.FullName,
+            Email = user.Email ?? ""
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResetPassword(AdminResetPasswordViewModel vm)
+    {
+        var user = await _users.FindByIdAsync(vm.Id);
+        if (user is null) return NotFound();
+        // Repopulate display fields for redisplay on validation failure.
+        vm.FullName = user.FullName;
+        vm.Email = user.Email ?? "";
+        if (!ModelState.IsValid) return View(vm);
+
+        // Generate a reset token and apply the new password (no need to know the old one).
+        var token = await _users.GeneratePasswordResetTokenAsync(user);
+        var result = await _users.ResetPasswordAsync(user, token, vm.NewPassword);
+        if (!result.Succeeded)
+        {
+            foreach (var e in result.Errors) ModelState.AddModelError(string.Empty, e.Description);
+            return View(vm);
+        }
+
+        TempData["Success"] = $"Password reset for {user.Email}.";
+        return RedirectToAction(nameof(Index));
+    }
 }

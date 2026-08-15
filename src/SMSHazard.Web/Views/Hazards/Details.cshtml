@@ -1,163 +1,325 @@
 @model SMSHazard.Application.DTOs.HazardDetailDto
 @{
     ViewData["Title"] = Model.ReferenceNo;
-}
-
-@if (TempData["Success"] is string ok)
-{
-    <div class="alert alert-success">@ok</div>
-}
-@if (TempData["Error"] is string err)
-{
-    <div class="alert alert-danger">@err</div>
-}
-@{
     var isStaff = User.IsInRole("SafetyOfficer") || User.IsInRole("Manager") || User.IsInRole("Admin");
-}
-@if (isStaff)
-{
-    <div class="mb-3 d-flex gap-2 flex-wrap">
-        @if (Model.Status != HazardStatus.Closed && Model.Status != HazardStatus.Rejected)
-        {
-            <a class="btn btn-primary" asp-action="Assess" asp-route-id="@Model.Id">@(Model.Assessments.Any() ? "Re-assess risk" : "Assess risk")</a>
-        }
-        @if (Model.Status == HazardStatus.ActionRequired || Model.Status == HazardStatus.InProgress)
-        {
-            <a class="btn btn-warning" asp-controller="Capa" asp-action="Create" asp-route-hazardId="@Model.Id">Assign action</a>
-        }
-        @if (Model.Status == HazardStatus.UnderVerification)
-        {
-            <a class="btn btn-success" asp-controller="Capa" asp-action="Verify" asp-route-hazardId="@Model.Id">Verify &amp; close</a>
-        }
-        @if (Model.Status == HazardStatus.Reported)
-        {
-            <form asp-controller="Capa" asp-action="Reject" method="post" class="d-inline"
-                  onsubmit="return confirm('Reject this hazard?');">
-                <input type="hidden" name="hazardId" value="@Model.Id" />
-                <button type="submit" class="btn btn-outline-danger">Reject</button>
-            </form>
-        }
-        @if (Model.Status == HazardStatus.Closed)
-        {
-            <form asp-controller="Capa" asp-action="Reopen" method="post" class="d-inline">
-                <input type="hidden" name="hazardId" value="@Model.Id" />
-                <button type="submit" class="btn btn-outline-secondary">Reopen</button>
-            </form>
-        }
-    </div>
+    var latestAssessment = Model.Assessments.OrderByDescending(a => a.AssessedDate).FirstOrDefault();
+    var overdueCount = Model.CorrectiveActions.Count(a => a.IsOverdue);
+    var openActionCount = Model.CorrectiveActions.Count(a => a.Status is CapaStatus.Open or CapaStatus.InProgress);
 }
 
-<div class="d-flex justify-content-between align-items-start mb-2">
-    <div>
-        <h2 class="mb-1">@Model.Title</h2>
-        <div class="text-muted">@Model.ReferenceNo &middot; @Model.CategoryName &middot; @Model.DepartmentName</div>
-    </div>
-    <span class="badge fs-6 @HazardDisplay.StatusCss(Model.Status)">@HazardDisplay.StatusText(Model.Status)</span>
-</div>
-
-<div class="row g-3">
-    <div class="col-md-8">
-        <div class="card mb-3"><div class="card-body">
-            <h5 class="card-title">Description</h5>
-            <p class="card-text">@Model.Description</p>
-            @if (!string.IsNullOrWhiteSpace(Model.ImmediateActionTaken))
-            {
-                <h6 class="mt-3">Immediate action taken</h6>
-                <p class="card-text">@Model.ImmediateActionTaken</p>
-            }
-        </div></div>
-
-        <div class="card mb-3"><div class="card-body">
-            <h5 class="card-title">Risk assessments</h5>
-            @if (!Model.Assessments.Any())
-            {
-                <p class="text-muted mb-0">Not yet assessed.</p>
-            }
-            else
-            {
-                <table class="table table-sm">
-                    <thead><tr><th>Type</th><th>L×S</th><th>Score</th><th>Level</th><th>By</th><th>Date</th><th>Rationale</th></tr></thead>
-                    <tbody>
-                    @foreach (var a in Model.Assessments)
+<section class="hazard-detail-hero card mb-5">
+    <div class="card-body">
+        <div class="hazard-hero-grid">
+            <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2 mb-3">
+                    <span class="hazard-ref">@Model.ReferenceNo</span>
+                    <span class="badge @HazardDisplay.StatusCss(Model.Status)">@HazardDisplay.StatusText(Model.Status)</span>
+                    @if (latestAssessment is not null)
                     {
-                        <tr>
-                            <td>@(a.IsResidual ? "Residual" : "Initial")</td>
-                            <td>@a.Likelihood × @a.Severity</td>
-                            <td>@a.RiskScore</td>
-                            <td><span class="badge @HazardDisplay.RiskCss(a.RiskLevel)">@a.RiskLevel</span></td>
-                            <td>@a.AssessedByName</td>
-                            <td class="text-nowrap">@a.AssessedDate.ToString("dd MMM yyyy")</td>
-                            <td class="small">@a.Rationale</td>
-                        </tr>
+                        <span class="badge @HazardDisplay.RiskCss(latestAssessment.RiskLevel)">@latestAssessment.RiskLevel risk</span>
                     }
-                    </tbody>
-                </table>
-            }
-        </div></div>
-
-        <div class="card mb-3"><div class="card-body">
-            <h5 class="card-title">Corrective / preventive actions</h5>
-            @if (!Model.CorrectiveActions.Any())
-            {
-                <p class="text-muted mb-0">No actions assigned yet.</p>
-            }
-            else
-            {
-                <table class="table table-sm">
-                    <thead><tr><th>Description</th><th>Type</th><th>Owner</th><th>Due</th><th>Status</th></tr></thead>
-                    <tbody>
-                    @foreach (var c in Model.CorrectiveActions)
+                    else
                     {
-                        <tr class="@(c.IsOverdue ? "table-danger" : "")">
-                            <td>@c.Description</td>
-                            <td>@c.Type</td>
-                            <td>@c.AssignedToName</td>
-                            <td class="text-nowrap">@c.DueDate.ToString("dd MMM yyyy") @(c.IsOverdue ? "⚠" : "")</td>
-                            <td>@c.Status</td>
-                        </tr>
+                        <span class="badge badge-gray">Not assessed</span>
                     }
-                    </tbody>
-                </table>
-            }
-        </div></div>
-    </div>
+                </div>
+                <h2 class="hazard-detail-title">@Model.Title</h2>
+                <div class="hazard-meta-line">
+                    <span><i data-lucide="tag"></i>@Model.CategoryName</span>
+                    <span><i data-lucide="building-2"></i>@Model.DepartmentName</span>
+                    <span><i data-lucide="calendar-days"></i>Occurred @Model.OccurrenceDate.ToString("dd MMM yyyy")</span>
+                </div>
+            </div>
 
-    <div class="col-md-4">
-        <div class="card mb-3"><div class="card-body">
-            <h6 class="card-title">Details</h6>
-            <dl class="row mb-0 small">
-                <dt class="col-5">Reported by</dt><dd class="col-7">@Model.ReporterName</dd>
-                <dt class="col-5">Reported</dt><dd class="col-7">@Model.ReportedDate.ToString("dd MMM yyyy HH:mm")</dd>
-                <dt class="col-5">Occurred</dt><dd class="col-7">@Model.OccurrenceDate.ToString("dd MMM yyyy")</dd>
-            </dl>
-        </div></div>
-
-        <div class="card"><div class="card-body">
-            <h6 class="card-title">Attachments</h6>
-            @if (!Model.Attachments.Any())
-            {
-                <p class="text-muted mb-0 small">None.</p>
-            }
-            else
-            {
-                <ul class="list-unstyled mb-0">
-                @foreach (var f in Model.Attachments)
+            <div class="hazard-score-card @(latestAssessment is null ? "risk-tone-none" : RiskToneClass(latestAssessment.RiskLevel))">
+                <div class="text-xs font-semibold text-slate-500 uppercase tracking-wide">Current risk</div>
+                @if (latestAssessment is null)
                 {
-                    <li class="mb-1">
-                        <a asp-action="Attachment" asp-route-id="@f.Id">@f.FileName</a>
-                        <span class="text-muted small">(@(f.SizeBytes / 1024) KB)</span>
-                    </li>
+                    <div class="hazard-score-value text-slate-400">--</div>
+                    <div class="text-xs text-slate-500">Awaiting assessment</div>
                 }
-                </ul>
-            }
-        </div></div>
+                else
+                {
+                    <div class="hazard-score-value">@latestAssessment.RiskScore</div>
+                    <div class="text-xs text-slate-500">@latestAssessment.Likelihood likelihood x @latestAssessment.Severity severity</div>
+                }
+            </div>
+        </div>
+
+        @if (isStaff)
+        {
+            <div class="hazard-action-bar">
+                @if (Model.Status != HazardStatus.Closed && Model.Status != HazardStatus.Rejected)
+                {
+                    <a class="btn-primary" asp-action="Assess" asp-route-id="@Model.Id"
+                       data-capa-drawer-url="@Url.Action("AssessDrawer", "Hazards", new { id = Model.Id })"
+                       data-capa-drawer-kicker="Risk assessment"
+                       data-capa-drawer-title="@(Model.Assessments.Any() ? "Re-assess risk" : "Assess risk")"
+                       data-capa-drawer-loading="Loading assessment form...">
+                        <i data-lucide="scan-line"></i>@(Model.Assessments.Any() ? "Re-assess risk" : "Assess risk")
+                    </a>
+                }
+                @if (Model.Status == HazardStatus.ActionRequired || Model.Status == HazardStatus.InProgress)
+                {
+                    <a class="btn-warning" asp-controller="Capa" asp-action="Create" asp-route-hazardId="@Model.Id"
+                       data-capa-drawer-url="@Url.Action("CreateDrawer", "Capa", new { hazardId = Model.Id })"
+                       data-capa-drawer-kicker="CAPA"
+                       data-capa-drawer-title="Assign action">
+                        <i data-lucide="list-plus"></i>Assign action
+                    </a>
+                }
+                @if (Model.Status == HazardStatus.UnderVerification)
+                {
+                    <a class="btn-success" asp-controller="Capa" asp-action="Verify" asp-route-hazardId="@Model.Id"><i data-lucide="badge-check"></i>Verify &amp; close</a>
+                }
+                @if (Model.Status == HazardStatus.Reported)
+                {
+                    <form asp-controller="Capa" asp-action="Reject" method="post" data-confirm="Reject this hazard?">
+                        <input type="hidden" name="hazardId" value="@Model.Id" />
+                        <button type="submit" class="btn-danger"><i data-lucide="x-circle"></i>Reject</button>
+                    </form>
+                }
+                @if (Model.Status == HazardStatus.Closed)
+                {
+                    <form asp-controller="Capa" asp-action="Reopen" method="post">
+                        <input type="hidden" name="hazardId" value="@Model.Id" />
+                        <button type="submit" class="btn-outline"><i data-lucide="refresh-cw"></i>Reopen</button>
+                    </form>
+                }
+            </div>
+        }
     </div>
+</section>
+
+<div class="hazard-detail-layout">
+    <div class="space-y-5">
+        <div class="card detail-section-card">
+            <div class="card-body">
+                <div class="section-heading">
+                    <span class="section-icon"><i data-lucide="file-text"></i></span>
+                    <div>
+                        <h5 class="card-title mb-0">Hazard narrative</h5>
+                        <p class="text-sm text-slate-500">Reported description and immediate safety response.</p>
+                    </div>
+                </div>
+                <div class="prose-panel">
+                    <p>@Model.Description</p>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(Model.ImmediateActionTaken))
+                {
+                    <div class="mt-4 rounded-lg border border-emerald-100 bg-emerald-50/70 p-4">
+                        <div class="mb-1 flex items-center gap-2 font-semibold text-emerald-800">
+                            <i data-lucide="shield-check"></i>
+                            Immediate action taken
+                        </div>
+                        <p class="text-sm text-emerald-900 whitespace-pre-line">@Model.ImmediateActionTaken</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="card detail-section-card">
+            <div class="card-body">
+                <div class="section-heading">
+                    <span class="section-icon"><i data-lucide="activity"></i></span>
+                    <div>
+                        <h5 class="card-title mb-0">Risk assessments</h5>
+                        <p class="text-sm text-slate-500">Likelihood, severity and rationale recorded for this hazard.</p>
+                    </div>
+                </div>
+
+                @if (!Model.Assessments.Any())
+                {
+                    <div class="empty-panel">
+                        <i data-lucide="clipboard-search"></i>
+                        <span>Risk has not been assessed yet.</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="assessment-stack">
+                        @{
+                            var assessmentSequence = Model.Assessments
+                                .OrderBy(x => x.AssessedDate)
+                                .Select((item, index) => new { item, number = index + 1 })
+                                .ToDictionary(x => x.item, x => x.number);
+                        }
+                        @foreach (var a in Model.Assessments.OrderByDescending(x => x.AssessedDate))
+                        {
+                            var assessmentNo = assessmentSequence[a];
+                            var assessmentLabel = a.IsResidual
+                                ? "Residual assessment"
+                                : assessmentNo == 1 ? "Initial assessment" : $"Risk reassessment {assessmentNo}";
+                            <article class="assessment-card">
+                                <div class="assessment-score @RiskToneClass(a.RiskLevel)">
+                                    <span>@a.RiskScore</span>
+                                    <small><b>@a.Likelihood</b> L <span>x</span> <b>@a.Severity</b> S</small>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <span class="font-semibold text-slate-900">@assessmentLabel</span>
+                                        <span class="badge @HazardDisplay.RiskCss(a.RiskLevel)">@a.RiskLevel</span>
+                                    </div>
+                                    <div class="mt-1 text-xs text-slate-500">By @a.AssessedByName on @a.AssessedDate.ToString("dd MMM yyyy")</div>
+                                    @if (!string.IsNullOrWhiteSpace(a.Rationale))
+                                    {
+                                        <p class="mt-3 text-sm text-slate-700 whitespace-pre-line">@a.Rationale</p>
+                                    }
+                                </div>
+                            </article>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="card detail-section-card">
+            <div class="card-body">
+                <div class="section-heading">
+                    <span class="section-icon"><i data-lucide="list-checks"></i></span>
+                    <div>
+                        <h5 class="card-title mb-0">Corrective / preventive actions</h5>
+                        <p class="text-sm text-slate-500">@openActionCount open, @overdueCount overdue.</p>
+                    </div>
+                </div>
+
+                @if (!Model.CorrectiveActions.Any())
+                {
+                    <div class="empty-panel">
+                        <i data-lucide="list-plus"></i>
+                        <span>No actions assigned yet.</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="action-stack">
+                        @foreach (var c in Model.CorrectiveActions.OrderBy(x => x.DueDate))
+                        {
+                            <article class="action-card @(c.IsOverdue ? "is-overdue" : "")">
+                                <div class="action-status-rail"></div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <span class="font-semibold text-slate-900">@c.Description</span>
+                                        <span class="badge @(c.IsOverdue ? "badge-red" : c.Status == CapaStatus.Verified ? "badge-green" : "badge-blue")">@c.Status</span>
+                                        <span class="badge badge-gray">@c.Type</span>
+                                    </div>
+                                    <div class="mt-2 flex flex-wrap gap-3 text-xs text-slate-500">
+                                        <span><i data-lucide="user"></i>@c.AssignedToName</span>
+                                        <span><i data-lucide="calendar-clock"></i>Due @c.DueDate.ToString("dd MMM yyyy")</span>
+                                        @if (c.IsOverdue)
+                                        {
+                                            <span class="font-semibold text-red-600"><i data-lucide="triangle-alert"></i>Overdue</span>
+                                        }
+                                    </div>
+                                    @if (isStaff && c.Status != CapaStatus.Verified)
+                                    {
+                                        <div class="mt-3">
+                                            <a class="action-card-link" asp-controller="Capa" asp-action="Update" asp-route-id="@c.Id"
+                                               data-capa-drawer-url="@Url.Action("UpdateDrawer", "Capa", new { id = c.Id })"
+                                               data-capa-drawer-kicker="CAPA"
+                                               data-capa-drawer-title="Update action">
+                                                <i data-lucide="pencil"></i>Update progress
+                                            </a>
+                                        </div>
+                                    }
+                                </div>
+                            </article>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <aside class="hazard-detail-sidebar space-y-5">
+        <div class="card detail-side-card">
+            <div class="card-body">
+                <h6 class="card-title">Report details</h6>
+                <dl class="divide-y divide-slate-100">
+                    <div class="detail-row"><dt>Reported by</dt><dd>@(Model.IsAnonymous ? "Anonymous (public)" : Model.ReporterName)</dd></div>
+                    @if (Model.IsAnonymous && !string.IsNullOrEmpty(Model.TrackingCode))
+                    {
+                        <div class="detail-row"><dt>Tracking code</dt><dd class="font-mono">@Model.TrackingCode</dd></div>
+                    }
+                    <div class="detail-row"><dt>Reported</dt><dd>@Model.ReportedDate.ToString("dd MMM yyyy HH:mm")</dd></div>
+                    <div class="detail-row"><dt>Occurred</dt><dd>@Model.OccurrenceDate.ToString("dd MMM yyyy")</dd></div>
+                    <div class="detail-row"><dt>Category</dt><dd>@Model.CategoryName</dd></div>
+                    <div class="detail-row"><dt>Department</dt><dd>@Model.DepartmentName</dd></div>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card detail-side-card">
+            <div class="card-body">
+                <div class="flex items-center justify-between gap-3">
+                    <h6 class="card-title mb-0">Attachments</h6>
+                    <span class="badge badge-blue">@Model.Attachments.Count file(s)</span>
+                </div>
+                @if (!Model.Attachments.Any())
+                {
+                    <div class="empty-panel mt-3">
+                        <i data-lucide="paperclip"></i>
+                        <span>No files attached.</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="attachment-list mt-3">
+                        @foreach (var f in Model.Attachments)
+                        {
+                            <a class="attachment-item" asp-action="Attachment" asp-route-id="@f.Id">
+                                <span class="attachment-icon"><i data-lucide="paperclip"></i></span>
+                                <span class="min-w-0">
+                                    <span class="attachment-name">@f.FileName</span>
+                                    <small>@FormatFileSize(f.SizeBytes)</small>
+                                </span>
+                                <i data-lucide="download" class="text-slate-400"></i>
+                            </a>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="detail-nav-actions">
+            <a class="detail-nav-button" asp-action="MyReports"><i data-lucide="file-text"></i>My reports</a>
+            @if (isStaff)
+            {
+                <a class="detail-nav-button" asp-action="Index"><i data-lucide="clipboard-list"></i>Hazard register</a>
+            }
+        </div>
+    </aside>
 </div>
 
-<div class="mt-3">
-    <a class="btn btn-outline-secondary" asp-action="MyReports">My reports</a>
-    @if (User.IsInRole("SafetyOfficer") || User.IsInRole("Manager") || User.IsInRole("Admin"))
+<div class="capa-drawer-backdrop" data-capa-drawer-backdrop hidden></div>
+<aside class="capa-drawer" data-capa-drawer hidden aria-hidden="true" aria-labelledby="capa-drawer-title">
+    <div class="capa-drawer-header">
+        <div>
+            <div class="text-xs font-semibold uppercase tracking-wide text-slate-500" data-capa-drawer-kicker>Action</div>
+            <h3 id="capa-drawer-title" data-capa-drawer-title>Action</h3>
+        </div>
+        <button type="button" class="icon-btn" data-capa-drawer-close aria-label="Close action drawer">
+            <i data-lucide="x"></i>
+        </button>
+    </div>
+    <div class="capa-drawer-body" data-capa-drawer-content></div>
+</aside>
+
+@functions {
+    private static string FormatFileSize(long bytes)
     {
-        <a class="btn btn-outline-secondary" asp-action="Index">Hazard register</a>
+        if (bytes < 1024) return $"{bytes} B";
+        var kb = bytes / 1024d;
+        if (kb < 1024) return $"{kb:0.#} KB";
+        return $"{kb / 1024d:0.#} MB";
     }
-</div>
+
+    private static string RiskToneClass(RiskLevel level) => level switch
+    {
+        RiskLevel.Low => "risk-tone-low",
+        RiskLevel.Medium => "risk-tone-medium",
+        RiskLevel.High => "risk-tone-high",
+        RiskLevel.Extreme => "risk-tone-extreme",
+        _ => "risk-tone-none"
+    };
+}

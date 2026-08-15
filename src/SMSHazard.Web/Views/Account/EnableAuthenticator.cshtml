@@ -1,0 +1,53 @@
+@model SMSHazard.Web.Models.EnableAuthenticatorViewModel
+@{
+    ViewData["Title"] = "Set up authenticator";
+}
+<h2 class="text-xl font-semibold text-slate-900 mb-4">Set up authenticator app</h2>
+
+<div class="card max-w-2xl"><div class="card-body space-y-5">
+    <ol class="space-y-5">
+        <li>
+            <div class="font-medium text-slate-800">1. Scan this QR code</div>
+            <p class="text-sm text-slate-500 mb-3">Use Google Authenticator, Microsoft Authenticator, Authy, or any TOTP app.</p>
+            <div id="qrcode" class="inline-block p-3 bg-white border border-slate-200 rounded-lg"></div>
+            <div class="mt-3 text-sm text-slate-600">
+                Can't scan? Enter this key manually:
+                <div class="font-mono text-slate-900 mt-1 select-all">@Model.SharedKey</div>
+            </div>
+        </li>
+        <li>
+            <div class="font-medium text-slate-800">2. Enter the 6-digit code from your app</div>
+            <form asp-action="EnableAuthenticator" method="post" class="mt-3 space-y-3 max-w-xs">
+                <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+                <input type="hidden" asp-for="SharedKey" />
+                <input type="hidden" asp-for="AuthenticatorUri" />
+                <div>
+                    <label asp-for="Code" class="label"></label>
+                    <input asp-for="Code" class="input font-mono tracking-widest" autocomplete="one-time-code"
+                           inputmode="numeric" placeholder="123456" />
+                    <span asp-validation-for="Code" class="field-error"></span>
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="btn-primary">Verify &amp; enable</button>
+                    <a class="btn-outline" asp-action="TwoFactor">Cancel</a>
+                </div>
+            </form>
+        </li>
+    </ol>
+</div></div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/lib/qrcode/qrcode.min.js"></script>
+    <script>
+        (function () {
+            var uri = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.AuthenticatorUri));
+            if (window.qrcode) {
+                var qr = qrcode(0, 'M');
+                qr.addData(uri);
+                qr.make();
+                document.getElementById('qrcode').innerHTML = qr.createSvgTag(4, 8);
+            }
+        })();
+    </script>
+}

@@ -1,108 +1,17 @@
 @model SMSHazard.Web.Models.Hazards.AssessViewModel
 @{
-    ViewData["Title"] = "Assess risk";
+    ViewData["Title"] = Model.IsResidual ? "Residual risk re-assessment" : "Risk assessment";
 }
-<h2 class="mb-1">@(Model.IsResidual ? "Residual risk re-assessment" : "Risk assessment")</h2>
-<p class="text-muted">@Model.ReferenceNo — @Model.Title</p>
 
-<form asp-action="Assess" method="post">
-    <input type="hidden" asp-for="HazardId" />
-    <input type="hidden" asp-for="ReferenceNo" />
-    <input type="hidden" asp-for="Title" />
-    <input type="hidden" asp-for="CurrentStatus" />
-    <input type="hidden" asp-for="IsResidual" />
-    <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+<h2 class="text-xl font-semibold text-slate-900">@ViewData["Title"]</h2>
+<p class="text-slate-500 mb-4">@Model.ReferenceNo - @Model.Title</p>
 
-    <div class="row g-3">
-        <div class="col-md-4">
-            <label asp-for="Likelihood" class="form-label"></label>
-            <select asp-for="Likelihood" id="likelihood" class="form-select">
-                <option value="5">5 — Frequent</option>
-                <option value="4">4 — Occasional</option>
-                <option value="3" selected>3 — Remote</option>
-                <option value="2">2 — Improbable</option>
-                <option value="1">1 — Extremely Improbable</option>
-            </select>
-            <span asp-validation-for="Likelihood" class="text-danger"></span>
-        </div>
-        <div class="col-md-4">
-            <label asp-for="Severity" class="form-label"></label>
-            <select asp-for="Severity" id="severity" class="form-select">
-                <option value="5">5 — Catastrophic</option>
-                <option value="4">4 — Hazardous</option>
-                <option value="3" selected>3 — Major</option>
-                <option value="2">2 — Minor</option>
-                <option value="1">1 — Negligible</option>
-            </select>
-            <span asp-validation-for="Severity" class="text-danger"></span>
-        </div>
-        <div class="col-md-4">
-            <label class="form-label">Computed risk</label>
-            <div id="riskBox" class="p-2 rounded text-center fw-bold text-white">
-                <span id="riskScore">9</span> — <span id="riskLevel">Medium</span>
-            </div>
-            <div class="form-text">Score = Likelihood × Severity (1–25).</div>
-        </div>
-
-        <div class="col-12">
-            <label asp-for="Rationale" class="form-label"></label>
-            <textarea asp-for="Rationale" class="form-control" rows="3"
-                      placeholder="Explain the basis for this likelihood and severity."></textarea>
-            <span asp-validation-for="Rationale" class="text-danger"></span>
-        </div>
+<div class="card max-w-3xl">
+    <div class="card-body">
+        <partial name="_AssessForm" model="Model" />
     </div>
-
-    <div class="mt-3">
-        <button type="submit" class="btn btn-primary">Save assessment</button>
-        <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.HazardId">Cancel</a>
-    </div>
-</form>
-
-@* Live 5×5 matrix reference *@
-<h6 class="mt-4">5×5 risk matrix</h6>
-<table class="table table-bordered text-center" style="max-width:520px">
-    <thead><tr><th>L \ S</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr></thead>
-    <tbody id="matrix"></tbody>
-</table>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <script>
-        function bandOf(score) {
-            if (score <= 4) return { name: 'Low', css: '#198754' };
-            if (score <= 9) return { name: 'Medium', css: '#ffc107', dark: true };
-            if (score <= 15) return { name: 'High', css: '#fd7e14' };
-            return { name: 'Extreme', css: '#dc3545' };
-        }
-        function update() {
-            var l = parseInt(document.getElementById('likelihood').value, 10);
-            var s = parseInt(document.getElementById('severity').value, 10);
-            var score = l * s;
-            var band = bandOf(score);
-            var box = document.getElementById('riskBox');
-            document.getElementById('riskScore').textContent = score;
-            document.getElementById('riskLevel').textContent = band.name;
-            box.style.backgroundColor = band.css;
-            box.style.color = band.dark ? '#000' : '#fff';
-        }
-        document.getElementById('likelihood').addEventListener('change', update);
-        document.getElementById('severity').addEventListener('change', update);
-
-        // build the matrix reference (L rows 5..1, S cols 1..5)
-        var body = document.getElementById('matrix');
-        for (var l = 5; l >= 1; l--) {
-            var tr = document.createElement('tr');
-            var th = document.createElement('th'); th.textContent = l; tr.appendChild(th);
-            for (var s = 1; s <= 5; s++) {
-                var td = document.createElement('td');
-                var score = l * s; var band = bandOf(score);
-                td.textContent = score;
-                td.style.backgroundColor = band.css;
-                td.style.color = band.dark ? '#000' : '#fff';
-                tr.appendChild(td);
-            }
-            body.appendChild(tr);
-        }
-        update();
-    </script>
 }

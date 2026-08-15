@@ -1,0 +1,59 @@
+@model SMSHazard.Web.Models.PublicReport.TrackViewModel
+@{
+    ViewData["Title"] = "Track a report";
+}
+<div class="max-w-xl mx-auto">
+    <div class="mb-4">
+        <h2 class="text-2xl font-bold text-slate-900">Track a report</h2>
+        <p class="text-slate-600 mt-1">Enter the tracking code you were given when you submitted your hazard.</p>
+    </div>
+
+    <div class="card mb-4"><div class="card-body">
+        <form asp-action="Track" method="post" class="flex flex-col sm:flex-row gap-2 sm:items-end">
+            <div class="flex-1">
+                <label asp-for="TrackingCode" class="label"></label>
+                <input asp-for="TrackingCode" class="input font-mono" placeholder="TR-XXXXXXXX" autocomplete="off" />
+                <span asp-validation-for="TrackingCode" class="field-error"></span>
+            </div>
+            <button type="submit" class="btn-primary"><i data-lucide="search"></i> Check status</button>
+        </form>
+    </div></div>
+
+    @if (Model.Searched)
+    {
+        if (Model.Result is null)
+        {
+            <div class="alert alert-danger">No report found for that tracking code. Check the code and try again.</div>
+        }
+        else
+        {
+            var r = Model.Result;
+            <div class="card"><div class="card-body">
+                <div class="flex justify-between items-start gap-3 mb-3">
+                    <div>
+                        <h3 class="text-lg font-semibold text-slate-900">@r.Title</h3>
+                        <div class="text-slate-500 text-sm">@r.ReferenceNo · @r.CategoryName · @r.DepartmentName</div>
+                    </div>
+                    <span class="badge @HazardDisplay.StatusCss(r.Status)">@HazardDisplay.StatusText(r.Status)</span>
+                </div>
+                <dl class="divide-y divide-slate-100">
+                    <div class="dl-row"><dt>Reported</dt><dd>@r.ReportedDate.ToString("dd MMM yyyy")</dd></div>
+                    <div class="dl-row"><dt>Current risk</dt><dd>
+                        @if (r.CurrentRiskLevel is not null)
+                        {
+                            <span class="badge @HazardDisplay.RiskCss(r.CurrentRiskLevel)">@r.CurrentRiskLevel</span>
+                        }
+                        else
+                        {
+                            <span class="text-slate-400">Not yet assessed</span>
+                        }
+                    </dd></div>
+                </dl>
+            </div></div>
+        }
+    }
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

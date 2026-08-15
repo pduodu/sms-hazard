@@ -1,0 +1,74 @@
+@model SMSHazard.Web.Models.PublicReport.PublicReportViewModel
+@{
+    ViewData["Title"] = "Report a hazard";
+}
+<div class="max-w-3xl mx-auto">
+    <div class="mb-4">
+        <h2 class="text-2xl font-bold text-slate-900">Report a hazard anonymously</h2>
+        <p class="text-slate-600 mt-1">No account needed. After you submit, you'll get a tracking code to check progress. Safety officers are notified immediately.</p>
+    </div>
+
+    <div class="card"><div class="card-body">
+    <form asp-action="Create" method="post" enctype="multipart/form-data">
+        <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+        @* Honeypot — hidden from humans; bots that fill it are dropped. *@
+        <div class="hidden" aria-hidden="true">
+            <label>Website<input asp-for="Website" tabindex="-1" autocomplete="off" /></label>
+        </div>
+
+        <div class="grid gap-4 sm:grid-cols-2">
+            <div class="sm:col-span-2">
+                <label asp-for="Title" class="label"></label>
+                <input asp-for="Title" class="input" placeholder="Short summary of the hazard" />
+                <span asp-validation-for="Title" class="field-error"></span>
+            </div>
+            <div>
+                <label asp-for="OccurrenceDate" class="label"></label>
+                <input asp-for="OccurrenceDate" type="date" class="input" />
+                <span asp-validation-for="OccurrenceDate" class="field-error"></span>
+            </div>
+            <div>
+                <label asp-for="HazardCategoryId" class="label"></label>
+                <select asp-for="HazardCategoryId" asp-items="Model.Categories" class="select">
+                    <option value="">— select category —</option>
+                </select>
+                <span asp-validation-for="HazardCategoryId" class="field-error"></span>
+            </div>
+            <div class="sm:col-span-2">
+                <label asp-for="DepartmentId" class="label"></label>
+                <select asp-for="DepartmentId" asp-items="Model.Departments" class="select">
+                    <option value="">— select department / location —</option>
+                </select>
+                <span asp-validation-for="DepartmentId" class="field-error"></span>
+            </div>
+            <div class="sm:col-span-2">
+                <label asp-for="Description" class="label"></label>
+                <textarea asp-for="Description" class="textarea" rows="4" placeholder="What happened, where, and why it's a hazard."></textarea>
+                <span asp-validation-for="Description" class="field-error"></span>
+            </div>
+            <div class="sm:col-span-2">
+                <label asp-for="ImmediateActionTaken" class="label"></label>
+                <textarea asp-for="ImmediateActionTaken" class="textarea" rows="2" placeholder="Optional — anything already done to make it safe."></textarea>
+                <span asp-validation-for="ImmediateActionTaken" class="field-error"></span>
+            </div>
+            <div class="sm:col-span-2">
+                <label asp-for="Attachments" class="label"></label>
+                <input asp-for="Attachments" type="file" class="input" multiple accept="image/*,application/pdf" />
+                <div class="text-slate-500 text-xs mt-1">Optional photos or a PDF, up to 25 MB each.</div>
+                <partial name="_CameraCapture" model="@("Attachments")" />
+                <span asp-validation-for="Attachments" class="field-error"></span>
+            </div>
+        </div>
+
+        <div class="mt-5 flex items-center gap-3">
+            <button type="submit" class="btn-primary">Submit report</button>
+            <a class="btn-outline" asp-action="Track">Track an existing report</a>
+        </div>
+    </form>
+    </div></div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

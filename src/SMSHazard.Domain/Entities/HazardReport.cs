@@ -25,6 +25,12 @@ public class HazardReport : BaseEntity
     public DateTime OccurrenceDate { get; set; }
     public string? ImmediateActionTaken { get; set; }
 
+    /// <summary>True when submitted through the public (unauthenticated) channel. ReportedById is then empty.</summary>
+    public bool IsAnonymous { get; set; }
+
+    /// <summary>Opaque code an anonymous reporter uses to track status. Null for authenticated reports.</summary>
+    public string? TrackingCode { get; set; }
+
     public HazardStatus Status { get; private set; } = HazardStatus.Reported;
 
     public ICollection<RiskAssessment> Assessments { get; set; } = new List<RiskAssessment>();

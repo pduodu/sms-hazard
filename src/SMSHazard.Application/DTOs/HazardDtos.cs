@@ -89,7 +89,21 @@ public sealed class HazardDetailDto
     public DateTime OccurrenceDate { get; set; }
     public string? ImmediateActionTaken { get; set; }
     public HazardStatus Status { get; set; }
+    public bool IsAnonymous { get; set; }
+    public string? TrackingCode { get; set; }
     public List<AssessmentDto> Assessments { get; set; } = new();
     public List<CapaDto> CorrectiveActions { get; set; } = new();
     public List<AttachmentDto> Attachments { get; set; } = new();
+}
+
+/// <summary>Read-only status view returned to an anonymous reporter who enters their tracking code.</summary>
+public sealed class PublicTrackDto
+{
+    public string ReferenceNo { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;
+    public string CategoryName { get; set; } = string.Empty;
+    public string DepartmentName { get; set; } = string.Empty;
+    public HazardStatus Status { get; set; }
+    public RiskLevel? CurrentRiskLevel { get; set; }
+    public DateTime ReportedDate { get; set; }
 }

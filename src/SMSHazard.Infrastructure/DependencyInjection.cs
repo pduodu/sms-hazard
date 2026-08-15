@@ -29,6 +29,7 @@ public static class DependencyInjection
         services.Configure<EmailSettings>(config.GetSection("Email"));
         services.Configure<StorageSettings>(config.GetSection("Storage"));
 
+        services.AddMemoryCache();
         services.AddScoped<IEmailSender, SmtpEmailSender>();
         services.AddSingleton<IAttachmentStorage, FileAttachmentStorage>();
         services.AddScoped<IHazardService, HazardService>();
@@ -36,9 +37,11 @@ public static class DependencyInjection
         services.AddScoped<ICapaService, CapaService>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IReminderService, ReminderService>();
+        services.AddScoped<IDigestService, DigestService>();
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IAuditService, AuditService>();
         services.AddScoped<ILookupAdminService, LookupAdminService>();
+        services.AddScoped<ISystemSettingsService, SystemSettingsService>();
 
         return services;
     }

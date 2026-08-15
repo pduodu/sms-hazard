@@ -2,45 +2,39 @@
 @{
     ViewData["Title"] = "Configuration";
 }
-@if (TempData["Success"] is string ok) { <div class="alert alert-success">@ok</div> }
-@if (TempData["Error"] is string err) { <div class="alert alert-danger">@err</div> }
-<h2 class="mb-3">Configuration</h2>
+<h2 class="text-xl font-semibold text-slate-900 mb-4">Configuration</h2>
 
-<div class="row g-4">
-    <div class="col-md-6">
-        <div class="card"><div class="card-body">
-            <h5 class="card-title">Hazard categories</h5>
-            <ul class="list-group mb-3">
-            @foreach (var c in Model.Categories)
-            {
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    @c.Name
-                    <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@c.Id" asp-route-kind="Category">Rename</a>
-                </li>
-            }
-            </ul>
-            <form asp-action="AddCategory" method="post" class="d-flex gap-2">
-                <input name="name" class="form-control" placeholder="New category" required />
-                <button type="submit" class="btn btn-primary">Add</button>
-            </form>
-        </div></div>
-    </div>
-    <div class="col-md-6">
-        <div class="card"><div class="card-body">
-            <h5 class="card-title">Departments</h5>
-            <ul class="list-group mb-3">
-            @foreach (var d in Model.Departments)
-            {
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    @d.Name
-                    <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@d.Id" asp-route-kind="Department">Rename</a>
-                </li>
-            }
-            </ul>
-            <form asp-action="AddDepartment" method="post" class="d-flex gap-2">
-                <input name="name" class="form-control" placeholder="New department" required />
-                <button type="submit" class="btn btn-primary">Add</button>
-            </form>
-        </div></div>
-    </div>
+<div class="grid gap-4 lg:grid-cols-2">
+    <div class="card"><div class="card-body">
+        <h5 class="card-title">Hazard categories</h5>
+        <ul class="divide-y divide-slate-100 mb-4 border border-slate-200 rounded-lg">
+        @foreach (var c in Model.Categories)
+        {
+            <li class="flex justify-between items-center px-3 py-2">
+                <span class="text-slate-700">@c.Name</span>
+                <a class="btn-outline btn-sm" asp-action="Edit" asp-route-id="@c.Id" asp-route-kind="Category">Rename</a>
+            </li>
+        }
+        </ul>
+        <form asp-action="AddCategory" method="post" class="flex gap-2">
+            <input name="name" class="input" placeholder="New category" required />
+            <button type="submit" class="btn-primary">Add</button>
+        </form>
+    </div></div>
+    <div class="card"><div class="card-body">
+        <h5 class="card-title">Departments</h5>
+        <ul class="divide-y divide-slate-100 mb-4 border border-slate-200 rounded-lg">
+        @foreach (var d in Model.Departments)
+        {
+            <li class="flex justify-between items-center px-3 py-2">
+                <span class="text-slate-700">@d.Name</span>
+                <a class="btn-outline btn-sm" asp-action="Edit" asp-route-id="@d.Id" asp-route-kind="Department">Rename</a>
+            </li>
+        }
+        </ul>
+        <form asp-action="AddDepartment" method="post" class="flex gap-2">
+            <input name="name" class="input" placeholder="New department" required />
+            <button type="submit" class="btn-primary">Add</button>
+        </form>
+    </div></div>
 </div>

@@ -1,0 +1,23 @@
+@{
+    ViewData["Title"] = "Report submitted";
+    var reference = ViewBag.ReferenceNo as string;
+    var code = ViewBag.TrackingCode as string;
+}
+<div class="max-w-xl mx-auto">
+    <div class="card"><div class="card-body text-center">
+        <i data-lucide="circle-check-big" class="text-5xl text-emerald-500"></i>
+        <h2 class="text-2xl font-bold text-slate-900 mt-3">Thank you — your report was submitted</h2>
+        <p class="text-slate-600 mt-1">Reference <strong>@reference</strong>. Safety officers have been notified.</p>
+
+        <div class="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div class="text-sm text-slate-500 mb-1">Your tracking code</div>
+            <div class="text-2xl font-mono font-bold tracking-wider text-primary select-all">@code</div>
+            <p class="text-slate-500 text-xs mt-2">Save this code now — it's the only way to check your report's progress, and we won't show it again.</p>
+        </div>
+
+        <div class="mt-5 flex justify-center gap-3">
+            <a class="btn-primary" asp-action="Track" asp-route-code="@code">Track this report</a>
+            <a class="btn-outline" asp-action="Create">Submit another</a>
+        </div>
+    </div></div>
+</div>

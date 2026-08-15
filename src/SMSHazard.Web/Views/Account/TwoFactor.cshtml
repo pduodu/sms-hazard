@@ -1,0 +1,48 @@
+@model SMSHazard.Web.Models.TwoFactorStatusViewModel
+@{
+    ViewData["Title"] = "Two-factor authentication";
+}
+<h2 class="text-xl font-semibold text-slate-900 mb-4">Two-factor authentication</h2>
+
+<div class="card max-w-2xl"><div class="card-body">
+    <div class="flex items-center gap-3 mb-4">
+        @if (Model.Is2faEnabled)
+        {
+            <span class="badge badge-green">Enabled</span>
+            <span class="text-slate-600 text-sm">Your account is protected by an authenticator app.</span>
+        }
+        else
+        {
+            <span class="badge badge-gray">Disabled</span>
+            <span class="text-slate-600 text-sm">Add a second step at sign-in using an authenticator app.</span>
+        }
+    </div>
+
+    @if (!Model.Is2faEnabled)
+    {
+        <a class="btn-primary" asp-action="EnableAuthenticator"><i data-lucide="shield-check"></i> Set up authenticator app</a>
+    }
+    else
+    {
+        <div class="space-y-3">
+            @if (Model.RecoveryCodesLeft <= 3)
+            {
+                <div class="alert alert-danger">You have @Model.RecoveryCodesLeft recovery codes left. Reset the authenticator to generate a fresh set.</div>
+            }
+            else
+            {
+                <p class="text-sm text-slate-500">@Model.RecoveryCodesLeft recovery codes remaining.</p>
+            }
+            <div class="flex flex-wrap gap-2">
+                <form asp-action="ResetAuthenticator" method="post" data-confirm="Reset your authenticator? You'll need to scan a new QR code.">
+                    <button type="submit" class="btn-outline"><i data-lucide="refresh-cw"></i> Reset authenticator</button>
+                </form>
+                <form asp-action="Disable2fa" method="post" data-confirm="Turn off two-factor authentication?">
+                    <button type="submit" class="btn-danger"><i data-lucide="shield-off"></i> Disable 2FA</button>
+                </form>
+            </div>
+        </div>
+    }
+</div></div>
+
+<a class="btn-outline mt-4" asp-action="Profile">Back to profile</a>

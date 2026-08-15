@@ -1,43 +1,196 @@
+@model DashboardDto?
 @{
     ViewData["Title"] = "Home";
+    var hasDashboard = Model is not null;
 }
-<div class="p-4 mb-4 bg-light rounded-3">
-    <h1 class="display-6">SMS-Hazard</h1>
-    <p class="lead">Enterprise hazard reporting, risk assessment &amp; corrective-action management.</p>
-    <p class="text-muted mb-3">Safety loop: Report → Assess → Assign CAPA → Work → Verify → Close.</p>
-    @if (User.Identity?.IsAuthenticated == true)
-    {
-        <p>Welcome back, <strong>@User.Identity!.Name</strong>.</p>
-    }
-    else
-    {
-        <a class="btn btn-primary" asp-controller="Account" asp-action="Login">Sign in to get started</a>
-    }
+
+<section class="home-hero card mb-6">
+    <div class="card-body">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+                <div class="eyebrow">Safety Management System</div>
+                <h1 class="text-2xl font-bold text-slate-900">SMS-Hazard Command Center</h1>
+                <p class="text-slate-600 mt-1 max-w-2xl">Report hazards, assess risk, assign corrective actions, and verify closure from one operational workspace.</p>
+                <p class="text-slate-500 text-sm mt-2">Safety loop: Report -> Assess -> Assign CAPA -> Work -> Verify -> Close.</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <a class="btn-primary" asp-controller="Hazards" asp-action="Create"><i data-lucide="triangle-alert"></i> Report hazard</a>
+                    <a class="btn-outline-primary" asp-controller="Capa" asp-action="MyActions"><i data-lucide="list-checks"></i> My actions</a>
+                }
+                else
+                {
+                    <a class="btn-primary" asp-controller="Account" asp-action="Login"><i data-lucide="log-in"></i> Sign in</a>
+                    <a class="btn-outline-primary" asp-controller="PublicReport" asp-action="Create"><i data-lucide="triangle-alert"></i> Public report</a>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+    <div class="start-card card"><div class="card-body">
+        <div class="start-icon"><i data-lucide="triangle-alert"></i></div>
+        <div class="start-step">Step 1</div>
+        <h5 class="card-title">Report</h5>
+        <p class="text-slate-600 text-sm">Capture hazards and near-misses with location, category, description, and evidence.</p>
+    </div></div>
+    <div class="start-card card"><div class="card-body">
+        <div class="start-icon"><i data-lucide="gauge"></i></div>
+        <div class="start-step">Step 2</div>
+        <h5 class="card-title">Assess</h5>
+        <p class="text-slate-600 text-sm">Score each report on the 5x5 likelihood and severity matrix.</p>
+    </div></div>
+    <div class="start-card card"><div class="card-body">
+        <div class="start-icon"><i data-lucide="clipboard-check"></i></div>
+        <div class="start-step">Step 3</div>
+        <h5 class="card-title">Act</h5>
+        <p class="text-slate-600 text-sm">Assign corrective or preventive actions with owners, due dates, and reminders.</p>
+    </div></div>
+    <div class="start-card card"><div class="card-body">
+        <div class="start-icon"><i data-lucide="shield-check"></i></div>
+        <div class="start-step">Step 4</div>
+        <h5 class="card-title">Verify &amp; Close</h5>
+        <p class="text-slate-600 text-sm">Confirm evidence, reassess residual risk, and preserve the audit trail.</p>
+    </div></div>
 </div>
 
-<div class="row g-3">
-    <div class="col-md-3">
-        <div class="card h-100"><div class="card-body">
-            <h5 class="card-title">1. Report</h5>
-            <p class="card-text small">Staff log hazards and near-misses with evidence attachments.</p>
+@if (hasDashboard)
+{
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <div>
+            <div class="eyebrow">Live assurance view</div>
+            <h2 class="text-xl font-semibold text-slate-900">Operational dashboard</h2>
+        </div>
+        <a class="btn-outline" asp-controller="Hazards" asp-action="Index"><i data-lucide="clipboard-list"></i> Open risk register</a>
+    </div>
+
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+        <div class="card metric-card"><div class="card-body">
+            <div class="metric-value">@Model!.OpenHazards</div>
+            <div class="metric-label">Open hazards</div>
+        </div></div>
+        <div class="card metric-card"><div class="card-body">
+            <div class="metric-value text-red-600">@Model.OverdueActions</div>
+            <div class="metric-label">Overdue actions</div>
+        </div></div>
+        <div class="card metric-card"><div class="card-body">
+            <div class="metric-value text-amber-500">@Model.HighRiskHazards</div>
+            <div class="metric-label">High / Extreme risk</div>
+        </div></div>
+        <div class="card metric-card"><div class="card-body">
+            <div class="metric-value text-emerald-600">@Model.ClosedThisPeriod</div>
+            <div class="metric-label">Closed in last 30 days</div>
         </div></div>
     </div>
-    <div class="col-md-3">
-        <div class="card h-100"><div class="card-body">
-            <h5 class="card-title">2. Assess</h5>
-            <p class="card-text small">Safety officers score risk on the 5×5 likelihood–severity matrix.</p>
+
+    <div class="grid gap-4 lg:grid-cols-2">
+        <div class="card chart-card"><div class="card-body">
+            <div class="flex items-center justify-between gap-3 mb-3">
+                <h5 class="card-title mb-0">Risk-level distribution</h5>
+                <span class="badge badge-blue">@Model.TotalHazards total</span>
+            </div>
+            <div id="homeRiskChart"></div>
+        </div></div>
+        <div class="card"><div class="card-body">
+            <h5 class="card-title">Risk summary</h5>
+            <table class="table">
+                <tbody>
+                    <tr><td><span class="badge badge-green">Low</span></td><td>@Model.Low</td></tr>
+                    <tr><td><span class="badge badge-yellow">Medium</span></td><td>@Model.Medium</td></tr>
+                    <tr><td><span class="badge badge-orange">High</span></td><td>@Model.High</td></tr>
+                    <tr><td><span class="badge badge-red">Extreme</span></td><td>@Model.Extreme</td></tr>
+                    <tr><td><span class="badge badge-gray">Not assessed</span></td><td>@Model.NotAssessed</td></tr>
+                    <tr class="font-bold"><td>Total hazards</td><td>@Model.TotalHazards</td></tr>
+                </tbody>
+            </table>
         </div></div>
     </div>
-    <div class="col-md-3">
-        <div class="card h-100"><div class="card-body">
-            <h5 class="card-title">3. Act</h5>
-            <p class="card-text small">Corrective/preventive actions are assigned with owners and due dates.</p>
-        </div></div>
-    </div>
-    <div class="col-md-3">
-        <div class="card h-100"><div class="card-body">
-            <h5 class="card-title">4. Verify &amp; Close</h5>
-            <p class="card-text small">Residual risk is re-assessed and the hazard is closed with a full audit trail.</p>
-        </div></div>
-    </div>
-</div>
+
+    <div class="card chart-card mt-4"><div class="card-body">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+            <div>
+                <h5 class="card-title mb-1">Risk heat map</h5>
+                <p class="text-slate-500 text-sm">Count of hazards in each 5x5 likelihood and severity cell.</p>
+            </div>
+            <span class="badge badge-blue">Latest assessment</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="risk-heatmap text-center border-collapse">
+                <thead>
+                    <tr>
+                        <th class="border border-slate-200 p-2 w-24">L / S</th>
+                        <th class="border border-slate-200 p-2">1<br/><span class="text-xs text-slate-400">Negligible</span></th>
+                        <th class="border border-slate-200 p-2">2<br/><span class="text-xs text-slate-400">Minor</span></th>
+                        <th class="border border-slate-200 p-2">3<br/><span class="text-xs text-slate-400">Major</span></th>
+                        <th class="border border-slate-200 p-2">4<br/><span class="text-xs text-slate-400">Hazardous</span></th>
+                        <th class="border border-slate-200 p-2">5<br/><span class="text-xs text-slate-400">Catastrophic</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                @{
+                    var likelihoodLabels = new[] { "", "Extremely Improbable", "Improbable", "Remote", "Occasional", "Frequent" };
+                }
+                @for (var l = 5; l >= 1; l--)
+                {
+                    <tr>
+                        <th class="border border-slate-200 p-2 align-middle">@l<br/><span class="text-xs text-slate-400">@likelihoodLabels[l]</span></th>
+                        @for (var s = 1; s <= 5; s++)
+                        {
+                            var score = l * s;
+                            var count = Model.Heat[l - 1][s - 1];
+                            <td class="border border-slate-200 p-2" style="background-color:@HeatColour(score); color:@HeatText(score); font-weight:@(count > 0 ? "bold" : "normal")">
+                                @(count > 0 ? count.ToString() : "")
+                                <div class="text-xs" style="opacity:.7">@score</div>
+                            </td>
+                        }
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div></div>
+}
+
+@functions {
+    static string HeatColour(int score) =>
+        score <= 4 ? "#198754" : score <= 9 ? "#ffc107" : score <= 15 ? "#fd7e14" : "#dc3545";
+    static string HeatText(int score) => (score >= 5 && score <= 9) ? "#000" : "#fff";
+}
+
+@section Scripts {
+    @if (hasDashboard)
+    {
+        <script>
+            var homeRiskEl = document.getElementById('homeRiskChart');
+            if (homeRiskEl && window.ApexCharts) {
+                new ApexCharts(homeRiskEl, {
+                    chart: {
+                        type: 'donut',
+                        height: 292,
+                        toolbar: { show: false },
+                        animations: { enabled: true, easing: 'easeinout', speed: 450 }
+                    },
+                    labels: ['Low', 'Medium', 'High', 'Extreme', 'Not assessed'],
+                    series: [@Model!.Low, @Model.Medium, @Model.High, @Model.Extreme, @Model.NotAssessed],
+                    colors: ['#16A34A', '#F59E0B', '#FD7E14', '#DC2626', '#94A3B8'],
+                    stroke: { width: 3, colors: ['#ffffff'] },
+                    legend: { position: 'bottom', fontSize: '13px' },
+                    plotOptions: {
+                        pie: {
+                            donut: {
+                                size: '68%',
+                                labels: {
+                                    show: true,
+                                    total: { show: true, label: 'Hazards', color: '#64748b' }
+                                }
+                            }
+                        }
+                    },
+                    dataLabels: { enabled: true, style: { fontWeight: 700 } }
+                }).render();
+            }
+        </script>
+    }
+}

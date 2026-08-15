@@ -12,6 +12,14 @@ public interface IHazardService
         CreateHazardRequest request, IReadOnlyList<AttachmentUpload> attachments,
         string reporterId, CancellationToken ct = default);
 
+    /// <summary>Creates a hazard through the public (unauthenticated) channel and returns a tracking code.</summary>
+    Task<(int Id, string ReferenceNo, string TrackingCode)> CreateAnonymousAsync(
+        CreateHazardRequest request, IReadOnlyList<AttachmentUpload> attachments,
+        CancellationToken ct = default);
+
+    /// <summary>Looks up an anonymous report's public status by its tracking code. Null if not found.</summary>
+    Task<PublicTrackDto?> TrackAsync(string trackingCode, CancellationToken ct = default);
+
     Task<IReadOnlyList<HazardListItemDto>> ListAsync(HazardFilter filter, CancellationToken ct = default);
     Task<HazardDetailDto?> GetDetailAsync(int id, CancellationToken ct = default);
 

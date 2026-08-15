@@ -17,6 +17,11 @@ public class HazardReportConfiguration : IEntityTypeConfiguration<HazardReport>
         b.Property(x => x.ReportedById).IsRequired().HasMaxLength(450);
         b.Property(x => x.Status).HasConversion<string>().HasMaxLength(30);
 
+        // Anonymous public reporting: tracking code is optional but unique when present.
+        // (On PostgreSQL, NULLs are distinct in a unique index, so authenticated reports do not collide.)
+        b.Property(x => x.TrackingCode).HasMaxLength(20);
+        b.HasIndex(x => x.TrackingCode).IsUnique();
+
         b.HasOne(x => x.HazardCategory).WithMany(c => c.Hazards)
             .HasForeignKey(x => x.HazardCategoryId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne(x => x.Department).WithMany(d => d.Hazards)

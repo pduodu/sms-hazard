@@ -1,0 +1,18 @@
+@model string[]
+@{
+    ViewData["Title"] = "Recovery codes";
+}
+<h2 class="text-xl font-semibold text-slate-900 mb-2">Save your recovery codes</h2>
+<div class="alert alert-danger max-w-2xl mb-4">
+    Store these somewhere safe. Each code works once and lets you sign in if you lose your authenticator. They won't be shown again.
+</div>
+
+<div class="card max-w-2xl"><div class="card-body">
+    <div class="grid grid-cols-2 sm:grid-cols-2 gap-2 font-mono text-sm">
+        @foreach (var code in Model)
+        {
+            <div class="px-3 py-2 bg-slate-50 border border-slate-200 rounded select-all">@code</div>
+        }
+    </div>
+    <a class="btn-primary mt-5" asp-action="TwoFactor">Done</a>
+</div></div>

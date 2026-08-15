@@ -2,32 +2,32 @@
 @{
     ViewData["Title"] = "Notifications";
 }
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="mb-0">Notifications</h2>
+<div class="flex justify-between items-center mb-4">
+    <h2 class="text-xl font-semibold text-slate-900">Notifications</h2>
     @if (Model.Any(n => !n.IsRead))
     {
         <form asp-action="MarkAllRead" method="post">
-            <button type="submit" class="btn btn-sm btn-outline-secondary">Mark all read</button>
+            <button type="submit" class="btn-outline btn-sm">Mark all read</button>
         </form>
     }
 </div>
 
 @if (!Model.Any())
 {
-    <div class="alert alert-light border">No notifications.</div>
+    <div class="alert alert-muted">No notifications.</div>
 }
 else
 {
-    <div class="list-group">
+    <div class="card divide-y divide-slate-100">
     @foreach (var n in Model)
     {
-        <a class="list-group-item list-group-item-action @(n.IsRead ? "" : "list-group-item-warning")"
+        <a class="block px-4 py-3 hover:bg-slate-50 @(n.IsRead ? "" : "bg-amber-50")"
            asp-action="Open" asp-route-id="@n.Id" asp-route-url="@n.LinkUrl">
-            <div class="d-flex justify-content-between">
-                <strong>@n.Title</strong>
-                <small class="text-muted">@n.CreatedDate.ToString("dd MMM yyyy HH:mm")</small>
+            <div class="flex justify-between items-center">
+                <strong class="text-slate-800">@n.Title</strong>
+                <small class="text-slate-400">@n.CreatedDate.ToString("dd MMM yyyy HH:mm")</small>
             </div>
-            <div class="small">@n.Message</div>
+            <div class="text-sm text-slate-600 mt-0.5">@n.Message</div>
         </a>
     }
     </div>

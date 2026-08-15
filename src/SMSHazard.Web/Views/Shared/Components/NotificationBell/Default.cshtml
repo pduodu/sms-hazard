@@ -1,8 +1,63 @@
-@model int
-<a class="nav-link position-relative" asp-controller="Notifications" asp-action="Index" title="Notifications">
-    🔔
-    <span id="notif-badge"
-          class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger @(Model == 0 ? "d-none" : "")">
-        @Model
-    </span>
-</a>
+@model SMSHazard.Web.Models.Notifications.NotificationBellViewModel
+<div x-data="{ open: false }"
+     :class="{ 'is-open': open }"
+     @@open-notifications.window="open=true"
+     @@keydown.escape.window="open=false"
+     class="notification-bell relative">
+    <button type="button"
+            class="icon-btn relative"
+            title="Notifications"
+            aria-label="Notifications"
+            :aria-expanded="open.toString()"
+            aria-controls="notification-popover"
+            @@click.stop="open=!open"
+            @@click.outside="open=false">
+        <i data-lucide="bell" class="text-lg"></i>
+        <span id="notif-badge"
+              class="absolute -top-0.5 -right-0.5 min-w-[1.1rem] h-[1.1rem] px-1 inline-flex items-center justify-center rounded-full bg-red-600 text-white text-[0.65rem] font-semibold @(Model.UnreadCount == 0 ? "hidden" : "")">
+            @Model.UnreadCount
+        </span>
+    </button>
+    <div id="notification-popover"
+         x-show="open"
+         x-cloak
+         x-transition
+         class="notification-popover absolute right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-lg z-40 overflow-hidden">
+        <div class="brand-strip px-4 py-3">
+            <div class="text-sm font-semibold">Notifications</div>
+            <div class="text-xs" style="color:#cfe6f7">@(Model.UnreadCount > 0 ? $"{Model.UnreadCount} unread safety update(s)" : "No unread alerts")</div>
+        </div>
+        @if (!Model.UnreadItems.Any())
+        {
+            <div class="notification-empty">
+                <i data-lucide="circle-check"></i>
+                <span>You are up to date. New safety alerts will appear here.</span>
+            </div>
+        }
+        else
+        {
+            <div class="notification-list">
+                @foreach (var n in Model.UnreadItems)
+                {
+                    <a class="notification-item"
+                       asp-controller="Notifications"
+                       asp-action="Open"
+                       asp-route-id="@n.Id"
+                       asp-route-url="@n.LinkUrl">
+                        <span class="notification-item-dot"></span>
+                        <span class="notification-item-body">
+                            <span class="notification-item-title">@n.Title</span>
+                            <span class="notification-item-message">@n.Message</span>
+                            <span class="notification-item-time">@n.CreatedDate.ToString("dd MMM HH:mm")</span>
+                        </span>
+                    </a>
+                }
+            </div>
+        }
+        <a class="notification-center-link"
+           asp-controller="Notifications"
+           asp-action="Index">
+            Open notification center
+        </a>
+    </div>
+</div>

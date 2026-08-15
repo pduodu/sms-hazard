@@ -1,35 +1,44 @@
 @model SMSHazard.Web.Models.LoginViewModel
+@inject ISystemSettingsService SettingsSvc
 @{
     ViewData["Title"] = "Sign in";
+    Layout = "_AuthLayout";
+    var allowAnon = (await SettingsSvc.GetAsync()).AllowAnonymousReporting;
 }
-<div class="row justify-content-center">
-    <div class="col-md-5">
-        <h2 class="mb-3">Sign in</h2>
-        <form asp-action="Login" method="post">
-            <input type="hidden" asp-for="ReturnUrl" />
-            <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
-            <div class="mb-3">
-                <label asp-for="Email" class="form-label"></label>
-                <input asp-for="Email" class="form-control" autocomplete="username" />
-                <span asp-validation-for="Email" class="text-danger"></span>
-            </div>
-            <div class="mb-3">
-                <label asp-for="Password" class="form-label"></label>
-                <input asp-for="Password" class="form-control" autocomplete="current-password" />
-                <span asp-validation-for="Password" class="text-danger"></span>
-            </div>
-            <div class="form-check mb-3">
-                <input asp-for="RememberMe" class="form-check-input" />
-                <label asp-for="RememberMe" class="form-check-label"></label>
-            </div>
-            <button type="submit" class="btn btn-primary">Sign in</button>
-        </form>
-        <div class="mt-4 small text-muted">
-            <strong>Demo accounts</strong> (password <code>SmsHazard#2026</code>):<br />
-            admin@smshazard.demo &middot; manager@smshazard.demo &middot; officer@smshazard.demo &middot; reporter@smshazard.demo &middot; owner@smshazard.demo
-        </div>
+<h4 class="text-lg font-semibold text-slate-900 mb-4">Sign in</h4>
+<form asp-action="Login" method="post" class="space-y-4">
+    <input type="hidden" asp-for="ReturnUrl" />
+    <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+    <div>
+        <label asp-for="Email" class="label"></label>
+        <input asp-for="Email" class="input" autocomplete="username" placeholder="you@example.com" />
+        <span asp-validation-for="Email" class="field-error"></span>
     </div>
+    <div>
+        <div class="flex justify-between items-center">
+            <label asp-for="Password" class="label"></label>
+            <a class="text-sm" asp-action="ForgotPassword">Forgot password?</a>
+        </div>
+        <input asp-for="Password" class="input" autocomplete="current-password" placeholder="••••••••" />
+        <span asp-validation-for="Password" class="field-error"></span>
+    </div>
+    <div class="form-check">
+        <input asp-for="RememberMe" class="rounded border-slate-300 text-primary focus:ring-primary" />
+        <label asp-for="RememberMe" class="text-sm text-slate-700"></label>
+    </div>
+    <button type="submit" class="btn-primary w-full"><i data-lucide="log-in"></i> Sign in</button>
+</form>
+<hr class="my-4 border-slate-100" />
+<div class="text-sm text-slate-500">
+    <strong class="text-slate-700">Demo accounts</strong> (password <code class="bg-slate-100 px-1 rounded">SmsHazard#2026</code>):<br />
+    admin@smshazard.demo · officer@smshazard.demo · reporter@smshazard.demo
 </div>
+@if (allowAnon)
+{
+    <div class="text-center mt-4">
+        <a class="text-sm inline-flex items-center gap-1" asp-controller="PublicReport" asp-action="Create"><i data-lucide="venetian-mask"></i> Report a hazard anonymously</a>
+    </div>
+}
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 }

@@ -36,6 +36,7 @@ public class HazardsController : Controller
 
     private bool IsStaff() =>
         User.IsInRole(Roles.SafetyOfficer) || User.IsInRole(Roles.Manager) || User.IsInRole(Roles.Admin);
+    private bool IsDrawerRequest() => Request.Headers["X-CAPA-Drawer"] == "1";
 
     // ---- Register / list (staff see all) ----
     [HttpGet]
@@ -132,21 +133,28 @@ public class HazardsController : Controller
     [Authorize(Roles = "SafetyOfficer,Manager,Admin")]
     public async Task<IActionResult> Assess(int id, bool residual = false)
     {
-        var h = await _hazards.GetDetailAsync(id);
-        if (h is null) return NotFound();
-        if (h.Status is HazardStatus.Closed or HazardStatus.Rejected)
+        var vm = await BuildAssessVm(id, residual);
+        if (vm is null) return NotFound();
+        if (vm.CurrentStatus is HazardStatus.Closed or HazardStatus.Rejected)
         {
             TempData["Error"] = "This hazard is closed or rejected and cannot be assessed.";
             return RedirectToAction(nameof(Details), new { id });
         }
-        return View(new AssessViewModel
+        return View(vm);
+    }
+
+    [HttpGet]
+    [Authorize(Roles = "SafetyOfficer,Manager,Admin")]
+    public async Task<IActionResult> AssessDrawer(int id, bool residual = false)
+    {
+        var vm = await BuildAssessVm(id, residual);
+        if (vm is null) return NotFound();
+        if (vm.CurrentStatus is HazardStatus.Closed or HazardStatus.Rejected)
         {
-            HazardId = h.Id,
-            ReferenceNo = h.ReferenceNo,
-            Title = h.Title,
-            CurrentStatus = h.Status,
-            IsResidual = residual
-        });
+            Response.StatusCode = StatusCodes.Status400BadRequest;
+            return Content("This hazard is closed or rejected and cannot be assessed.");
+        }
+        return PartialView("_AssessForm", vm);
     }
 
     [HttpPost]
@@ -154,7 +162,11 @@ public class HazardsController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Assess(AssessViewModel vm)
     {
-        if (!ModelState.IsValid) return View(vm);
+        if (!ModelState.IsValid)
+        {
+            if (IsDrawerRequest()) return PartialView("_AssessForm", vm);
+            return View(vm);
+        }
 
         var assessorId = _users.GetUserId(User)!;
         var result = await _risk.AssessAsync(
@@ -164,6 +176,10 @@ public class HazardsController : Controller
 
         var (score, level) = result.Value;
         TempData["Success"] = $"Risk assessed: score {score} ({level}).";
+        if (IsDrawerRequest())
+        {
+            return Json(new { redirectUrl = Url.Action(nameof(Details), new { id = vm.HazardId }) });
+        }
         return RedirectToAction(nameof(Details), new { id = vm.HazardId });
     }
 
@@ -191,6 +207,20 @@ public class HazardsController : Controller
         vm.Categories = cats.Select(c => new SelectListItem(c.Name, c.Id.ToString()));
         vm.Departments = deps.Select(d => new SelectListItem(d.Name, d.Id.ToString()));
         return vm;
+    }
+
+    private async Task<AssessViewModel?> BuildAssessVm(int id, bool residual)
+    {
+        var h = await _hazards.GetDetailAsync(id);
+        if (h is null) return null;
+        return new AssessViewModel
+        {
+            HazardId = h.Id,
+            ReferenceNo = h.ReferenceNo,
+            Title = h.Title,
+            CurrentStatus = h.Status,
+            IsResidual = residual
+        };
     }
 
     private async Task<IEnumerable<SelectListItem>> DepartmentOptions()

@@ -2,54 +2,48 @@
 @{
     ViewData["Title"] = "Dashboard";
 }
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="mb-0">Safety dashboard</h2>
-    <a class="btn btn-outline-secondary" asp-controller="Hazards" asp-action="Index">Open risk register</a>
+<div class="flex justify-between items-center mb-4">
+    <h2 class="text-xl font-semibold text-slate-900">Safety dashboard</h2>
+    <a class="btn-outline" asp-controller="Hazards" asp-action="Index">Open risk register</a>
 </div>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-3">
-        <div class="card text-bg-primary h-100"><div class="card-body">
-            <div class="display-6">@Model.OpenHazards</div><div>Open hazards</div>
-        </div></div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-bg-danger h-100"><div class="card-body">
-            <div class="display-6">@Model.OverdueActions</div><div>Overdue actions</div>
-        </div></div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-bg-warning h-100"><div class="card-body">
-            <div class="display-6">@Model.HighRiskHazards</div><div>High / Extreme risk</div>
-        </div></div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-bg-success h-100"><div class="card-body">
-            <div class="display-6">@Model.ClosedThisPeriod</div><div>Closed (last 30 days)</div>
-        </div></div>
-    </div>
+<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+    <div class="card metric-card"><div class="card-body">
+        <div class="metric-value">@Model.OpenHazards</div>
+        <div class="metric-label">Open hazards</div>
+    </div></div>
+    <div class="card metric-card"><div class="card-body">
+        <div class="metric-value text-red-600">@Model.OverdueActions</div>
+        <div class="metric-label">Overdue actions</div>
+    </div></div>
+    <div class="card metric-card"><div class="card-body">
+        <div class="metric-value text-amber-500">@Model.HighRiskHazards</div>
+        <div class="metric-label">High / Extreme risk</div>
+    </div></div>
+    <div class="card metric-card"><div class="card-body">
+        <div class="metric-value text-emerald-600">@Model.ClosedThisPeriod</div>
+        <div class="metric-label">Closed (last 30 days)</div>
+    </div></div>
 </div>
 
-<div class="row g-3">
-    <div class="col-md-6">
-        <div class="card h-100"><div class="card-body">
-            <h5 class="card-title">Risk-level distribution</h5>
-            <canvas id="riskChart" height="220"></canvas>
-        </div></div>
-    </div>
-    <div class="col-md-6">
-        <div class="card h-100"><div class="card-body">
-            <h5 class="card-title">Summary</h5>
-            <table class="table table-sm mb-0">
-                <tr><td><span class="badge bg-success">Low</span></td><td>@Model.Low</td></tr>
-                <tr><td><span class="badge bg-warning text-dark">Medium</span></td><td>@Model.Medium</td></tr>
-                <tr><td><span class="badge bg-orange text-white">High</span></td><td>@Model.High</td></tr>
-                <tr><td><span class="badge bg-danger">Extreme</span></td><td>@Model.Extreme</td></tr>
-                <tr><td><span class="badge bg-secondary">Not assessed</span></td><td>@Model.NotAssessed</td></tr>
-                <tr class="fw-bold"><td>Total hazards</td><td>@Model.TotalHazards</td></tr>
-            </table>
-        </div></div>
-    </div>
+<div class="grid gap-4 lg:grid-cols-2">
+    <div class="card"><div class="card-body">
+        <h5 class="card-title">Risk-level distribution</h5>
+        <div id="riskChart"></div>
+    </div></div>
+    <div class="card"><div class="card-body">
+        <h5 class="card-title">Summary</h5>
+        <table class="table">
+            <tbody>
+                <tr><td><span class="badge badge-green">Low</span></td><td>@Model.Low</td></tr>
+                <tr><td><span class="badge badge-yellow">Medium</span></td><td>@Model.Medium</td></tr>
+                <tr><td><span class="badge badge-orange">High</span></td><td>@Model.High</td></tr>
+                <tr><td><span class="badge badge-red">Extreme</span></td><td>@Model.Extreme</td></tr>
+                <tr><td><span class="badge badge-gray">Not assessed</span></td><td>@Model.NotAssessed</td></tr>
+                <tr class="font-bold"><td>Total hazards</td><td>@Model.TotalHazards</td></tr>
+            </tbody>
+        </table>
+    </div></div>
 </div>
 
 @functions {
@@ -58,18 +52,19 @@
     static string HeatText(int score) => (score >= 5 && score <= 9) ? "#000" : "#fff";
 }
 
-<div class="card mt-3"><div class="card-body">
+<div class="card mt-4"><div class="card-body">
     <h5 class="card-title">Risk heat-map (Likelihood × Severity)</h5>
-    <p class="text-muted small mb-2">Count of hazards in each 5×5 matrix cell, by their latest assessment.</p>
-    <table class="table table-bordered text-center mb-0" style="max-width:640px">
+    <p class="text-slate-500 text-sm mb-3">Count of hazards in each 5×5 matrix cell, by their latest assessment.</p>
+    <div class="overflow-x-auto">
+    <table class="text-center border-collapse" style="max-width:640px">
         <thead>
             <tr>
-                <th style="width:90px">L \ S</th>
-                <th>1<br/><span class="small text-muted">Negligible</span></th>
-                <th>2<br/><span class="small text-muted">Minor</span></th>
-                <th>3<br/><span class="small text-muted">Major</span></th>
-                <th>4<br/><span class="small text-muted">Hazardous</span></th>
-                <th>5<br/><span class="small text-muted">Catastrophic</span></th>
+                <th class="border border-slate-200 p-2 w-24">L \ S</th>
+                <th class="border border-slate-200 p-2">1<br/><span class="text-xs text-slate-400">Negligible</span></th>
+                <th class="border border-slate-200 p-2">2<br/><span class="text-xs text-slate-400">Minor</span></th>
+                <th class="border border-slate-200 p-2">3<br/><span class="text-xs text-slate-400">Major</span></th>
+                <th class="border border-slate-200 p-2">4<br/><span class="text-xs text-slate-400">Hazardous</span></th>
+                <th class="border border-slate-200 p-2">5<br/><span class="text-xs text-slate-400">Catastrophic</span></th>
             </tr>
         </thead>
         <tbody>
@@ -79,36 +74,35 @@
         @for (var l = 5; l >= 1; l--)
         {
             <tr>
-                <th class="align-middle">@l<br/><span class="small text-muted">@likelihoodLabels[l]</span></th>
+                <th class="border border-slate-200 p-2 align-middle">@l<br/><span class="text-xs text-slate-400">@likelihoodLabels[l]</span></th>
                 @for (var s = 1; s <= 5; s++)
                 {
                     var score = l * s;
                     var count = Model.Heat[l - 1][s - 1];
-                    <td style="background-color:@HeatColour(score); color:@HeatText(score); font-weight:@(count > 0 ? "bold" : "normal")">
+                    <td class="border border-slate-200 p-2" style="background-color:@HeatColour(score); color:@HeatText(score); font-weight:@(count > 0 ? "bold" : "normal")">
                         @(count > 0 ? count.ToString() : "")
-                        <div class="small" style="opacity:.7">@score</div>
+                        <div class="text-xs" style="opacity:.7">@score</div>
                     </td>
                 }
             </tr>
         }
         </tbody>
     </table>
+    </div>
 </div></div>
 
 @section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <script>
-        const ctx = document.getElementById('riskChart');
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
+        var riskEl = document.getElementById('riskChart');
+        if (riskEl && window.ApexCharts) {
+            new ApexCharts(riskEl, {
+                chart: { type: 'donut', height: 260 },
                 labels: ['Low', 'Medium', 'High', 'Extreme', 'Not assessed'],
-                datasets: [{
-                    data: [@Model.Low, @Model.Medium, @Model.High, @Model.Extreme, @Model.NotAssessed],
-                    backgroundColor: ['#198754', '#ffc107', '#fd7e14', '#dc3545', '#6c757d']
-                }]
-            },
-            options: { plugins: { legend: { position: 'right' } } }
-        });
+                series: [@Model.Low, @Model.Medium, @Model.High, @Model.Extreme, @Model.NotAssessed],
+                colors: ['#16A34A', '#F59E0B', '#fd7e14', '#DC2626', '#9CA3AF'],
+                legend: { position: 'right' },
+                dataLabels: { enabled: true }
+            }).render();
+        }
     </script>
 }

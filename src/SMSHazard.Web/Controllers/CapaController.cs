@@ -27,6 +27,7 @@ public class CapaController : Controller
     private const string Staff = "SafetyOfficer,Manager,Admin";
     private bool IsStaff() =>
         User.IsInRole(Roles.SafetyOfficer) || User.IsInRole(Roles.Manager) || User.IsInRole(Roles.Admin);
+    private bool IsDrawerRequest() => Request.Headers["X-CAPA-Drawer"] == "1";
 
     // ---- Assign a corrective/preventive action (staff) ----
     [HttpGet]
@@ -45,6 +46,23 @@ public class CapaController : Controller
         return View(vm);
     }
 
+    [HttpGet]
+    [Authorize(Roles = Staff)]
+    public async Task<IActionResult> CreateDrawer(int hazardId)
+    {
+        var h = await _hazards.GetDetailAsync(hazardId);
+        if (h is null) return NotFound();
+        if (h.Status is not (HazardStatus.ActionRequired or HazardStatus.InProgress))
+        {
+            Response.StatusCode = StatusCodes.Status400BadRequest;
+            return Content("Actions can only be assigned when the hazard is Action Required or In Progress.");
+        }
+
+        var vm = new CreateCapaViewModel { HazardId = h.Id, ReferenceNo = h.ReferenceNo, Title = h.Title };
+        vm.Owners = await OwnerOptions();
+        return PartialView("_CreateForm", vm);
+    }
+
     [HttpPost]
     [Authorize(Roles = Staff)]
     [ValidateAntiForgeryToken]
@@ -53,6 +71,7 @@ public class CapaController : Controller
         if (!ModelState.IsValid)
         {
             vm.Owners = await OwnerOptions();
+            if (IsDrawerRequest()) return PartialView("_CreateForm", vm);
             return View(vm);
         }
         var ok = await _capa.CreateAsync(new CreateCapaRequest
@@ -66,6 +85,10 @@ public class CapaController : Controller
 
         if (!ok) return NotFound();
         TempData["Success"] = "Corrective action assigned.";
+        if (IsDrawerRequest())
+        {
+            return Json(new { redirectUrl = Url.Action("Details", "Hazards", new { id = vm.HazardId }) });
+        }
         return RedirectToAction("Details", "Hazards", new { id = vm.HazardId });
     }
 
@@ -85,7 +108,22 @@ public class CapaController : Controller
         if (dto is null) return NotFound();
         if (!IsStaff() && dto.AssignedToId != _users.GetUserId(User)) return Forbid();
 
-        return View(new UpdateCapaViewModel
+        return View(MapUpdateViewModel(dto));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> UpdateDrawer(int id)
+    {
+        var dto = await _capa.GetForUpdateAsync(id);
+        if (dto is null) return NotFound();
+        if (!IsStaff() && dto.AssignedToId != _users.GetUserId(User)) return Forbid();
+
+        return PartialView("_UpdateForm", MapUpdateViewModel(dto));
+    }
+
+    private static UpdateCapaViewModel MapUpdateViewModel(CapaEditDto dto)
+    {
+        return new UpdateCapaViewModel
         {
             CapaId = dto.CapaId,
             HazardId = dto.HazardId,
@@ -94,18 +132,26 @@ public class CapaController : Controller
             Description = dto.Description,
             Status = dto.Status,
             ProgressNote = dto.ProgressNote
-        });
+        };
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Update(UpdateCapaViewModel vm)
     {
-        if (!ModelState.IsValid) return View(vm);
+        if (!ModelState.IsValid)
+        {
+            if (IsDrawerRequest()) return PartialView("_UpdateForm", vm);
+            return View(vm);
+        }
         var ok = await _capa.UpdateProgressAsync(
             vm.CapaId, vm.Status, vm.ProgressNote, _users.GetUserId(User)!, IsStaff());
         if (!ok) return Forbid();
         TempData["Success"] = "Action updated.";
+        if (IsDrawerRequest())
+        {
+            return Json(new { redirectUrl = Url.Action("Details", "Hazards", new { id = vm.HazardId }) });
+        }
         return RedirectToAction("Details", "Hazards", new { id = vm.HazardId });
     }
 

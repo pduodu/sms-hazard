@@ -1,0 +1,79 @@
+@model SMSHazard.Web.Models.Hazards.AssessViewModel
+
+<form asp-action="Assess" method="post" data-capa-drawer-form>
+    <input type="hidden" asp-for="HazardId" />
+    <input type="hidden" asp-for="ReferenceNo" />
+    <input type="hidden" asp-for="Title" />
+    <input type="hidden" asp-for="CurrentStatus" />
+    <input type="hidden" asp-for="IsResidual" />
+    <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+    <div class="risk-assessment-panel" data-risk-assessment>
+        <div class="grid gap-4 sm:grid-cols-3">
+            <div>
+                <label asp-for="Likelihood" class="label"></label>
+                <select asp-for="Likelihood" class="select" data-risk-likelihood>
+                    <option value="5">5 - Frequent</option>
+                    <option value="4">4 - Occasional</option>
+                    <option value="3">3 - Remote</option>
+                    <option value="2">2 - Improbable</option>
+                    <option value="1">1 - Extremely improbable</option>
+                </select>
+                <span asp-validation-for="Likelihood" class="field-error"></span>
+            </div>
+            <div>
+                <label asp-for="Severity" class="label"></label>
+                <select asp-for="Severity" class="select" data-risk-severity>
+                    <option value="5">5 - Catastrophic</option>
+                    <option value="4">4 - Hazardous</option>
+                    <option value="3">3 - Major</option>
+                    <option value="2">2 - Minor</option>
+                    <option value="1">1 - Negligible</option>
+                </select>
+                <span asp-validation-for="Severity" class="field-error"></span>
+            </div>
+            <div>
+                <label class="label">Computed risk</label>
+                <div class="risk-result" data-risk-box>
+                    <span data-risk-score>9</span>
+                    <small data-risk-level>Medium</small>
+                </div>
+                <div class="text-slate-500 text-xs mt-1">Score = likelihood x severity.</div>
+            </div>
+
+            <div class="sm:col-span-3">
+                <label asp-for="Rationale" class="label"></label>
+                <textarea asp-for="Rationale" class="textarea" rows="4"
+                          placeholder="Explain the basis for this likelihood and severity."></textarea>
+                <span asp-validation-for="Rationale" class="field-error"></span>
+            </div>
+        </div>
+
+        <div class="risk-matrix-wrap">
+            <div class="flex items-center justify-between gap-3 mb-2">
+                <h6 class="font-semibold text-slate-800">5 x 5 risk matrix</h6>
+                <span class="text-xs text-slate-500">L = likelihood, S = severity</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="risk-matrix">
+                    <thead>
+                    <tr>
+                        <th>L \ S</th>
+                        <th>1</th>
+                        <th>2</th>
+                        <th>3</th>
+                        <th>4</th>
+                        <th>5</th>
+                    </tr>
+                    </thead>
+                    <tbody data-risk-matrix></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="capa-drawer-actions">
+        <button type="submit" class="btn-primary"><i data-lucide="save"></i>Save assessment</button>
+        <a class="btn-outline" asp-action="Details" asp-route-id="@Model.HazardId" data-capa-drawer-close>Cancel</a>
+    </div>
+</form>

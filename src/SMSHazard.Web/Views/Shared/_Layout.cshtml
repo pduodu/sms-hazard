@@ -1,83 +1,248 @@
+@inject ISystemSettingsService SettingsSvc
+@{
+    var branding = await SettingsSvc.GetAsync();
+    var authed = User.Identity?.IsAuthenticated == true;
+    var ctrl = (ViewContext.RouteData.Values["controller"] as string) ?? "";
+    var act = (ViewContext.RouteData.Values["action"] as string) ?? "";
+    string Active(string c, string? a = null) =>
+        (ctrl.Equals(c, StringComparison.OrdinalIgnoreCase) && (a == null || act.Equals(a, StringComparison.OrdinalIgnoreCase)))
+            ? "active" : "";
+    var role = User.IsInRole("Admin") ? "Admin"
+        : User.IsInRole("Manager") ? "Manager"
+        : User.IsInRole("SafetyOfficer") ? "Safety Officer"
+        : User.IsInRole("Reporter") ? "Reporter" : "User";
+    var isStaff = User.IsInRole("SafetyOfficer") || User.IsInRole("Manager") || User.IsInRole("Admin");
+    var initial = (User.Identity?.Name ?? "?").Trim().Substring(0, 1).ToUpper();
+}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - SMS-Hazard</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" />
+    <title>@ViewData["Title"] · @branding.OrganizationName</title>
+    <link rel="stylesheet" href="~/lib/tailwind/app.css" />
+    <link rel="stylesheet" href="~/lib/toastr/toastr.min.css" />
+    <link rel="stylesheet" href="~/lib/flatpickr/flatpickr.min.css" />
+    <link rel="stylesheet" href="~/lib/datatables-dt/dataTables.dataTables.min.css" />
+    <link rel="stylesheet" href="~/lib/select2/css/select2.min.css" />
+    <link rel="stylesheet" href="~/css/sms-polish.css" asp-append-version="true" />
 </head>
-<body>
-<header>
-    <nav class="navbar navbar-expand-sm navbar-dark bg-dark border-bottom mb-3">
-        <div class="container">
-            <a class="navbar-brand" asp-controller="Home" asp-action="Index">🛡️ SMS-Hazard</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#nav"
-                    aria-controls="nav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="nav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Home</a></li>
-                    @if (User.Identity?.IsAuthenticated == true)
-                    {
-                        <li class="nav-item"><a class="nav-link" asp-controller="Hazards" asp-action="Create">Report hazard</a></li>
-                        <li class="nav-item"><a class="nav-link" asp-controller="Hazards" asp-action="MyReports">My reports</a></li>
-                        <li class="nav-item"><a class="nav-link" asp-controller="Capa" asp-action="MyActions">My actions</a></li>
-                        @if (User.IsInRole("SafetyOfficer") || User.IsInRole("Manager") || User.IsInRole("Admin"))
-                        {
-                            <li class="nav-item"><a class="nav-link" asp-controller="Dashboard" asp-action="Index">Dashboard</a></li>
-                            <li class="nav-item"><a class="nav-link" asp-controller="Hazards" asp-action="Index">Register</a></li>
-                        }
-                        @if (User.IsInRole("Admin"))
-                        {
-                            <li class="nav-item"><a class="nav-link" asp-controller="Users" asp-action="Index">Users</a></li>
-                            <li class="nav-item"><a class="nav-link" asp-controller="Config" asp-action="Index">Configuration</a></li>
-                            <li class="nav-item"><a class="nav-link" asp-controller="Audit" asp-action="Index">Audit</a></li>
-                            <li class="nav-item"><a class="nav-link" href="/hangfire">Reminders</a></li>
-                        }
-                    }
-                </ul>
-                <ul class="navbar-nav">
-                    @if (User.Identity?.IsAuthenticated == true)
-                    {
-                        <li class="nav-item">@await Component.InvokeAsync("NotificationBell")</li>
-                        var role = User.IsInRole("Admin") ? "Admin"
-                            : User.IsInRole("Manager") ? "Manager"
-                            : User.IsInRole("SafetyOfficer") ? "Safety Officer"
-                            : User.IsInRole("Reporter") ? "Reporter" : "User";
-                        <li class="nav-item d-flex align-items-center me-2">
-                            <a class="nav-link p-0 me-2" asp-controller="Account" asp-action="Profile">@User.Identity!.Name</a>
-                            <span class="badge bg-info text-dark">@role</span>
-                        </li>
-                        <li class="nav-item">
-                            <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
-                                <button type="submit" class="btn btn-outline-light btn-sm">Sign out</button>
+<body class="bg-slate-100 text-slate-800">
+@if (!authed)
+{
+    <div class="min-h-screen flex flex-col">
+        <header class="h-16 topbar-glass border-b border-slate-200 flex items-center px-4 sm:px-6 gap-3 sticky top-0 z-20">
+            <a class="flex items-center gap-2 font-semibold text-slate-900 truncate" asp-controller="Home" asp-action="Index">
+                @if (!string.IsNullOrEmpty(branding.LogoPath))
+                {
+                    <img src="@branding.LogoPath" alt="@branding.OrganizationName" class="h-8 w-auto" />
+                }
+                else
+                {
+                    <i data-lucide="shield-check" class="text-primary text-xl"></i>
+                }
+                <span>@branding.OrganizationName</span>
+            </a>
+            <div class="ml-auto flex gap-2">
+                @if (branding.AllowAnonymousReporting)
+                {
+                    <a class="btn-outline-primary btn-sm" asp-controller="PublicReport" asp-action="Create"><i data-lucide="triangle-alert"></i> Report</a>
+                    <a class="btn-outline btn-sm" asp-controller="PublicReport" asp-action="Track"><i data-lucide="search"></i> Track</a>
+                }
+                <a class="btn-primary btn-sm" asp-controller="Account" asp-action="Login"><i data-lucide="log-in"></i> Sign in</a>
+            </div>
+        </header>
+        <main class="page-shell flex-1 p-4 sm:p-6 max-w-6xl w-full mx-auto">
+            @RenderBody()
+        </main>
+    </div>
+}
+else
+{
+    <div x-data="{ sidebar: false }" class="min-h-screen"
+         data-session-timeout
+         data-session-timeout-seconds="1800"
+         data-session-warning-seconds="60"
+         data-session-login-url="@Url.Action("Login", "Account")"
+         data-session-keep-alive-url="@Url.Action("UnreadCount", "Notifications")">
+        <!-- Backdrop (mobile) -->
+        <div x-show="sidebar" x-cloak x-transition.opacity @@click="sidebar=false"
+             class="fixed inset-0 bg-slate-900/40 z-30 lg:hidden"></div>
+
+        <!-- Sidebar -->
+        <aside :class="sidebar ? 'translate-x-0' : '-translate-x-full'"
+               class="app-drawer fixed z-40 inset-y-0 left-0 w-64 border-r border-slate-200 flex flex-col transition-transform duration-300 lg:translate-x-0">
+            <a class="brand-strip h-16 flex items-center gap-2 px-5 font-semibold border-b border-slate-200" asp-controller="Home" asp-action="Index">
+                @if (!string.IsNullOrEmpty(branding.LogoPath))
+                {
+                    <img src="@branding.LogoPath" alt="@branding.OrganizationName" class="h-8 w-auto rounded bg-white p-1" />
+                }
+                else
+                {
+                    <i data-lucide="shield-check" class="text-xl"></i>
+                }
+                <span class="truncate">@branding.OrganizationName</span>
+            </a>
+            <nav class="flex-1 overflow-y-auto p-3 space-y-1">
+                <a class="sidebar-link @Active("Home")" asp-controller="Home" asp-action="Index"><i data-lucide="house"></i> Home</a>
+                <a class="sidebar-link @Active("Hazards","Create")" asp-controller="Hazards" asp-action="Create"><i data-lucide="triangle-alert"></i> Report hazard</a>
+                <a class="sidebar-link @Active("Hazards","MyReports")" asp-controller="Hazards" asp-action="MyReports"><i data-lucide="file-text"></i> My reports</a>
+                <a class="sidebar-link @Active("Capa","MyActions")" asp-controller="Capa" asp-action="MyActions"><i data-lucide="list-checks"></i> My actions</a>
+                @if (isStaff)
+                {
+                    <a class="sidebar-link @Active("Home")" asp-controller="Home" asp-action="Index"><i data-lucide="gauge"></i> Dashboard</a>
+                    <a class="sidebar-link @Active("Hazards","Index")" asp-controller="Hazards" asp-action="Index"><i data-lucide="clipboard-list"></i> Risk register</a>
+                }
+                @if (User.IsInRole("Admin"))
+                {
+                    <div class="nav-section">Administration</div>
+                    <a class="sidebar-link @Active("Users")" asp-controller="Users" asp-action="Index"><i data-lucide="users"></i> Users</a>
+                    <a class="sidebar-link @Active("Config")" asp-controller="Config" asp-action="Index"><i data-lucide="sliders-horizontal"></i> Configuration</a>
+                    <a class="sidebar-link @Active("Settings")" asp-controller="Settings" asp-action="Index"><i data-lucide="settings"></i> Settings</a>
+                    <a class="sidebar-link @Active("Audit")" asp-controller="Audit" asp-action="Index"><i data-lucide="history"></i> Audit log</a>
+                    <a class="sidebar-link" href="/hangfire"><i data-lucide="alarm-clock"></i> Reminders</a>
+                }
+            </nav>
+        </aside>
+
+        <!-- Main column -->
+        <div class="lg:pl-64 flex flex-col min-h-screen">
+            <header class="h-16 topbar-glass border-b border-slate-200 flex items-center px-4 sm:px-6 gap-3 sticky top-0 z-20">
+                <button class="icon-btn lg:hidden" type="button" @@click="sidebar=true"><i data-lucide="menu" class="text-xl"></i></button>
+                <h1 class="page-title truncate">@ViewData["Title"]</h1>
+                <div class="ml-auto flex items-center gap-2">
+                    @await Component.InvokeAsync("NotificationBell")
+                    <div x-data="{ open: false }" class="relative">
+                        <button @@click="open=!open" @@click.outside="open=false" class="flex items-center gap-2">
+                            <span class="avatar">@initial</span>
+                            <span class="hidden sm:inline text-slate-700 text-sm">@User.Identity!.Name</span>
+                            <span class="badge badge-blue hidden md:inline">@role</span>
+                            <i data-lucide="chevron-down" class="text-slate-400 text-xs"></i>
+                        </button>
+                        <div x-show="open" x-cloak x-transition
+                             class="absolute right-0 mt-2 w-52 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-30">
+                            <a class="dropdown-item" asp-controller="Account" asp-action="Profile"><i data-lucide="user"></i>My profile</a>
+                            <a class="dropdown-item" asp-controller="Account" asp-action="ChangePassword"><i data-lucide="key-round"></i>Change password</a>
+                            <hr class="my-1 border-slate-100" />
+                            <form asp-controller="Account" asp-action="Logout" method="post">
+                                <button type="submit" class="dropdown-item"><i data-lucide="log-out"></i>Sign out</button>
                             </form>
-                        </li>
-                    }
-                    else
-                    {
-                        <li class="nav-item"><a class="btn btn-outline-light btn-sm" asp-controller="Account" asp-action="Login">Sign in</a></li>
-                    }
-                </ul>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <main class="page-shell flex-1 p-4 sm:p-6 pb-24 lg:pb-6" role="main">
+                @RenderBody()
+            </main>
+        </div>
+
+        <!-- Mobile bottom bar -->
+        <nav class="mobile-bottom-bar lg:hidden fixed bottom-0 inset-x-0 border-t flex z-50">
+            @{
+                string BC(string c, string? a = null) => Active(c, a) == "active" ? "active" : "";
+            }
+            <a @@click.stop="sidebar=false" class="mobile-nav-link @BC("Home")" asp-controller="Home" asp-action="Index"><i data-lucide="house" class="text-lg"></i><span>Home</span></a>
+            <a @@click.stop="sidebar=false" class="mobile-nav-link @BC("Hazards","Create")" asp-controller="Hazards" asp-action="Create"><i data-lucide="triangle-alert" class="text-lg"></i><span>Report</span></a>
+            <a @@click.stop="sidebar=false" class="mobile-nav-link @BC("Hazards","MyReports")" asp-controller="Hazards" asp-action="MyReports"><i data-lucide="file-text" class="text-lg"></i><span>Reports</span></a>
+            <a @@click.stop="sidebar=false" class="mobile-nav-link @BC("Capa","MyActions")" asp-controller="Capa" asp-action="MyActions"><i data-lucide="list-checks" class="text-lg"></i><span>Actions</span></a>
+            <button type="button" @@click.stop="sidebar=false; $dispatch('open-notifications')" class="mobile-nav-link @BC("Notifications")"><i data-lucide="bell" class="text-lg"></i><span>Alerts</span></button>
+        </nav>
+
+        <div class="session-timeout-modal" data-session-modal aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="session-timeout-title">
+            <div class="session-timeout-card">
+                <div class="session-timeout-icon"><i data-lucide="timer-reset"></i></div>
+                <div class="min-w-0">
+                    <h3 id="session-timeout-title">Session expiring soon</h3>
+                    <p>Your session will end in <strong data-session-countdown>01:00</strong>. Stay signed in to continue working.</p>
+                    <div class="session-timeout-actions">
+                        <button type="button" class="btn-primary" data-session-stay><i data-lucide="refresh-cw"></i>Stay signed in</button>
+                        <button type="button" class="btn-outline" data-session-signout>Go to login</button>
+                    </div>
+                </div>
             </div>
         </div>
-    </nav>
-</header>
-<div class="container">
-    <main role="main" class="pb-3">
-        @RenderBody()
-    </main>
-</div>
-<footer class="border-top footer text-muted">
-    <div class="container">&copy; 2026 SMS-Hazard — CSCD602 Capstone (22427657)</div>
-</footer>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-@if (User.Identity?.IsAuthenticated == true)
+    </div>
+}
+
+<script src="~/lib/jquery/jquery.min.js"></script>
+<script src="~/lib/lucide/lucide.min.js"></script>
+<script src="~/lib/toastr/toastr.min.js"></script>
+<script src="~/lib/sweetalert2/sweetalert2.all.min.js"></script>
+<script src="~/lib/flatpickr/flatpickr.min.js"></script>
+<script src="~/lib/apexcharts/apexcharts.min.js"></script>
+<script src="~/lib/datatables-dt/dataTables.min.js"></script>
+<script src="~/lib/datatables-dt/dataTables.dataTables.min.js"></script>
+<script src="~/lib/select2/js/select2.full.min.js"></script>
+<script>
+    // ---- Flash messages via toastr ----
+    toastr.options = { closeButton: true, progressBar: true, positionClass: 'toast-top-right', timeOut: 4000 };
+    @if (TempData["Success"] is string s) { <text>toastr.success(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(s)));</text> }
+    @if (TempData["Error"] is string e) { <text>toastr.error(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(e)));</text> }
+    @if (TempData["Info"] is string i) { <text>toastr.info(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(i)));</text> }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Render Lucide icons (replaces <i data-lucide> with inline SVG)
+        if (window.lucide) lucide.createIcons();
+
+        // Date pickers
+        if (window.flatpickr) {
+            document.querySelectorAll('input[type="date"]:not([data-flatpickr="off"]), input[data-flatpickr]:not([data-flatpickr="off"]), input.js-date:not([data-flatpickr="off"])').forEach(function (el) {
+                if (el._flatpickr) return;
+                flatpickr(el, {
+                    dateFormat: 'Y-m-d',
+                    allowInput: true,
+                    disableMobile: true
+                });
+            });
+        }
+
+        // Searchable selects
+        if (window.jQuery && jQuery.fn.select2) {
+            jQuery('select:not([data-select2="off"])').each(function () {
+                var $select = jQuery(this);
+                if ($select.hasClass('select2-hidden-accessible')) return;
+                var placeholder = $select.find('option[value=""]').first().text() || $select.attr('placeholder') || 'Select an option';
+                var compact = $select.hasClass('btn-sm') || $select.hasClass('!w-auto') || $select.data('select2Width') === 'auto';
+                var compactWidth = compact ? Math.max(Math.ceil($select.outerWidth()), 168) + 'px' : '100%';
+                $select.select2({
+                    width: compactWidth,
+                    placeholder: placeholder,
+                    allowClear: $select.find('option[value=""]').length > 0,
+                    dropdownAutoWidth: false
+                });
+                $select.next('.select2-container').toggleClass('select2-compact', compact);
+            });
+        }
+
+        // DataTables
+        if (window.jQuery && jQuery.fn.dataTable) {
+            jQuery('table[data-datatable]').each(function(){
+                jQuery(this).DataTable({ pageLength: 10, lengthChange: false, order: [], language: { search: '', searchPlaceholder: 'Search…' } });
+            });
+        }
+
+        // Confirm dialogs via SweetAlert2 for forms marked [data-confirm]
+        document.querySelectorAll('form[data-confirm]').forEach(function(f){
+            f.addEventListener('submit', function(ev){
+                if (f.dataset.confirmed) return;
+                ev.preventDefault();
+                Swal.fire({ title: f.getAttribute('data-confirm') || 'Are you sure?', icon: 'warning',
+                    showCancelButton: true, confirmButtonColor: '#045C9D', confirmButtonText: 'Yes, proceed' })
+                    .then(function(r){ if (r.isConfirmed){ f.dataset.confirmed = '1'; f.submit(); } });
+            });
+        });
+
+        document.querySelectorAll('a[href]:not([target]):not([href^="#"]):not([href^="javascript:"]):not([data-capa-drawer-url]):not([data-capa-drawer-close])').forEach(function (link) {
+            link.addEventListener('click', function () {
+                if (link.origin === window.location.origin) document.body.classList.add('page-exiting');
+            });
+        });
+    });
+</script>
+@if (authed)
 {
     <script>
-        // MVP in-app notifications: poll the unread count and update the bell badge.
         (function () {
             var badge = document.getElementById('notif-badge');
             if (!badge) return;
@@ -86,14 +251,23 @@
                     var r = await fetch('/Notifications/UnreadCount', { headers: { 'Accept': 'application/json' } });
                     if (!r.ok) return;
                     var d = await r.json();
-                    if (d.count > 0) { badge.textContent = d.count; badge.classList.remove('d-none'); }
-                    else { badge.classList.add('d-none'); }
-                } catch (e) { /* ignore transient errors */ }
+                    if (d.count > 0) { badge.textContent = d.count; badge.classList.remove('hidden'); }
+                    else { badge.classList.add('hidden'); }
+                } catch (e) { }
             }
             setInterval(poll, 30000);
         })();
     </script>
 }
+<script src="~/js/upload-dropzone.js" asp-append-version="true"></script>
+<script src="~/js/camera-capture.js" asp-append-version="true"></script>
+<script src="~/js/risk-assessment.js" asp-append-version="true"></script>
+<script src="~/js/capa-drawer.js" asp-append-version="true"></script>
+@if (authed)
+{
+    <script src="~/js/session-timeout.js" asp-append-version="true"></script>
+}
+<script defer src="~/lib/alpine/alpine.min.js"></script>
 @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

@@ -1,0 +1,21 @@
+@model SMSHazard.Web.Models.LoginWithRecoveryCodeViewModel
+@{
+    ViewData["Title"] = "Recovery code sign in";
+    Layout = "_AuthLayout";
+}
+<h4 class="text-lg font-semibold text-slate-900 mb-2">Use a recovery code</h4>
+<p class="text-sm text-slate-500 mb-4">Enter one of the recovery codes you saved when you set up two-factor authentication.</p>
+<form asp-action="LoginWithRecoveryCode" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="space-y-4">
+    <input type="hidden" asp-for="ReturnUrl" />
+    <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+    <div>
+        <label asp-for="RecoveryCode" class="label"></label>
+        <input asp-for="RecoveryCode" class="input font-mono" autocomplete="off" placeholder="XXXXX-XXXXX" autofocus />
+        <span asp-validation-for="RecoveryCode" class="field-error"></span>
+    </div>
+    <button type="submit" class="btn-primary w-full">Sign in</button>
+</form>
+<div class="text-center mt-4">
+    <a class="text-sm" asp-action="LoginWith2fa" asp-route-returnUrl="@Model.ReturnUrl">Back to authenticator code</a>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

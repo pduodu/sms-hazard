@@ -1,6 +1,7 @@
 using Hangfire;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using SMSHazard.Application.Common;
 using SMSHazard.Application.DTOs;
 using SMSHazard.Application.Interfaces;
 using SMSHazard.Domain.Entities;
@@ -129,13 +130,11 @@ public sealed class NotificationService : INotificationService
 
     private static string BuildHtml(string title, string message, string? linkUrl)
     {
-        var link = string.IsNullOrWhiteSpace(linkUrl)
-            ? ""
-            : $"<p><a href=\"{linkUrl}\">Open in SMS-Hazard</a></p>";
-        return $@"<div style=""font-family:sans-serif"">
-<h3>{System.Net.WebUtility.HtmlEncode(title)}</h3>
-<p>{System.Net.WebUtility.HtmlEncode(message)}</p>
-{link}
-<hr/><small>SMS-Hazard — automated safety notification.</small></div>";
+        var hasLink = !string.IsNullOrWhiteSpace(linkUrl);
+        return EmailTemplate.Render(
+            title: title,
+            bodyHtml: EmailTemplate.Paragraph(message),
+            buttonUrl: hasLink ? linkUrl : null,
+            buttonText: hasLink ? "Open in SMS-Hazard" : null);
     }
 }

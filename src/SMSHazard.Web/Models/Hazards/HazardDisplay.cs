@@ -6,23 +6,23 @@ public static class HazardDisplay
 {
     public static string RiskCss(RiskLevel? level) => level switch
     {
-        RiskLevel.Low => "bg-success",
-        RiskLevel.Medium => "bg-warning text-dark",
-        RiskLevel.High => "bg-orange text-white",
-        RiskLevel.Extreme => "bg-danger",
-        _ => "bg-secondary"
+        RiskLevel.Low => "badge-green",
+        RiskLevel.Medium => "badge-yellow",
+        RiskLevel.High => "badge-orange",
+        RiskLevel.Extreme => "badge-red",
+        _ => "badge-gray"
     };
 
     public static string StatusCss(HazardStatus status) => status switch
     {
-        HazardStatus.Reported => "bg-secondary",
-        HazardStatus.UnderAssessment => "bg-info text-dark",
-        HazardStatus.ActionRequired => "bg-warning text-dark",
-        HazardStatus.InProgress => "bg-primary",
-        HazardStatus.UnderVerification => "bg-info text-dark",
-        HazardStatus.Closed => "bg-success",
-        HazardStatus.Rejected => "bg-dark",
-        _ => "bg-secondary"
+        HazardStatus.Reported => "badge-gray",
+        HazardStatus.UnderAssessment => "badge-blue",
+        HazardStatus.ActionRequired => "badge-yellow",
+        HazardStatus.InProgress => "badge-blue",
+        HazardStatus.UnderVerification => "badge-blue",
+        HazardStatus.Closed => "badge-green",
+        HazardStatus.Rejected => "badge-gray",
+        _ => "badge-gray"
     };
 
     public static string StatusText(HazardStatus status) => status switch

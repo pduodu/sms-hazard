@@ -1,0 +1,14 @@
+@model string
+@* HR-01 camera capture widget. @Model is the id of the target <input type="file"> to feed. *@
+<div data-camera data-target="@Model" class="mt-2">
+    <button type="button" data-cam-start class="btn-outline btn-sm"><i data-lucide="camera"></i> Take a photo</button>
+    <div data-cam-stage class="hidden mt-3 space-y-2">
+        <video data-cam-video autoplay playsinline muted class="w-full max-w-sm rounded-lg border border-slate-200 bg-black"></video>
+        <div class="flex gap-2">
+            <button type="button" data-cam-capture class="btn-primary btn-sm"><i data-lucide="circle-dot"></i> Capture</button>
+            <button type="button" data-cam-stop class="btn-outline btn-sm">Cancel</button>
+        </div>
+    </div>
+    <canvas data-cam-canvas class="hidden"></canvas>
+    <div data-cam-preview class="flex flex-wrap gap-2 mt-2"></div>
+</div>

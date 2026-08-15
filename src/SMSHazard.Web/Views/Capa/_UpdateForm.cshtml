@@ -1,0 +1,36 @@
+@model SMSHazard.Web.Models.Capa.UpdateCapaViewModel
+
+<div class="capa-drawer-summary">
+    <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">Action</div>
+    <p>@Model.Description</p>
+</div>
+
+<form asp-action="Update" method="post" data-capa-drawer-form>
+    <input type="hidden" asp-for="CapaId" />
+    <input type="hidden" asp-for="HazardId" />
+    <input type="hidden" asp-for="HazardRef" />
+    <input type="hidden" asp-for="HazardTitle" />
+    <input type="hidden" asp-for="Description" />
+    <div asp-validation-summary="ModelOnly" class="validation-summary-errors"></div>
+
+    <div class="grid gap-4">
+        <div>
+            <label asp-for="Status" class="label"></label>
+            <select asp-for="Status" class="select">
+                <option value="0">Open</option>
+                <option value="1">In Progress</option>
+                <option value="2">Completed</option>
+            </select>
+        </div>
+        <div>
+            <label asp-for="ProgressNote" class="label"></label>
+            <textarea asp-for="ProgressNote" class="textarea" rows="4" placeholder="Add progress notes or evidence details."></textarea>
+            <span asp-validation-for="ProgressNote" class="field-error"></span>
+        </div>
+    </div>
+
+    <div class="capa-drawer-actions">
+        <button type="submit" class="btn-primary"><i data-lucide="save"></i>Save update</button>
+        <a class="btn-outline" asp-controller="Hazards" asp-action="Details" asp-route-id="@Model.HazardId" data-capa-drawer-close>Cancel</a>
+    </div>
+</form>

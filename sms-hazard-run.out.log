@@ -1,0 +1,63 @@
+Using launch settings from src\SMSHazard.Web\Properties\launchSettings.json...
+info: Hangfire.PostgreSql.PostgreSqlStorage[0]
+      Start installing Hangfire SQL objects...
+info: Hangfire.PostgreSql.PostgreSqlStorage[0]
+      Hangfire SQL objects installed.
+info: Microsoft.EntityFrameworkCore.Migrations[20411]
+      Acquiring an exclusive lock for migration application. See https://aka.ms/efcore-docs-migrations-lock for more information if this takes too long.
+info: Microsoft.EntityFrameworkCore.Migrations[20405]
+      No migrations were applied. The database is already up to date.
+warn: Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager[35]
+      No XML encryptor configured. Key {1df9e95c-01b9-48a3-8571-f5d1639fe364} may be persisted to storage in unencrypted form.
+fail: Microsoft.AspNetCore.DataProtection.KeyManagement.KeyRingProvider[48]
+      An error occurred while reading the key ring.
+      System.AggregateException: An error occurred while writing to logger(s). (Cannot open log for source '.NET Runtime'. You may not have write access.)
+       ---> System.InvalidOperationException: Cannot open log for source '.NET Runtime'. You may not have write access.
+       ---> System.ComponentModel.Win32Exception (5): Access is denied.
+         --- End of inner exception stack trace ---
+         at System.Diagnostics.EventLogInternal.OpenForWrite(String currentMachineName)
+         at System.Diagnostics.EventLogInternal.InternalWriteEvent(UInt32 eventID, UInt16 category, EventLogEntryType type, String[] strings, Byte[] rawData, String currentMachineName)
+         at System.Diagnostics.EventLogInternal.WriteEvent(EventInstance instance, Byte[] data, Object[] values)
+         at Microsoft.Extensions.Logging.EventLog.WindowsEventLog.WriteEntry(String message, EventLogEntryType type, Int32 eventID, Int16 category)
+         at Microsoft.Extensions.Logging.EventLog.EventLogLogger.WriteMessage(String message, EventLogEntryType eventLogEntryType, Int32 eventId)
+         at Microsoft.Extensions.Logging.EventLog.EventLogLogger.Log[TState](LogLevel logLevel, EventId eventId, TState state, Exception exception, Func`3 formatter)
+         at Microsoft.Extensions.Logging.Logger.<Log>g__LoggerLog|14_0[TState](LogLevel logLevel, EventId eventId, ILogger logger, Exception exception, Func`3 formatter, List`1& exceptions, TState& state)
+         --- End of inner exception stack trace ---
+         at Microsoft.Extensions.Logging.Logger.ThrowLoggingError(List`1 exceptions)
+         at Microsoft.Extensions.Logging.Logger.Log[TState](LogLevel logLevel, EventId eventId, TState state, Exception exception, Func`3 formatter)
+         at Microsoft.Extensions.Logging.Logger`1.Microsoft.Extensions.Logging.ILogger.Log[TState](LogLevel logLevel, EventId eventId, TState state, Exception exception, Func`3 formatter)
+         at Microsoft.Extensions.Logging.LoggerMessage.<>c__DisplayClass10_0`1.<Define>g__Log|0(ILogger logger, T1 arg1, Exception exception)
+         at Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager.Microsoft.AspNetCore.DataProtection.KeyManagement.Internal.IInternalXmlKeyManager.CreateNewKey(Guid keyId, DateTimeOffset creationDate, DateTimeOffset activationDate, DateTimeOffset expirationDate)
+         at Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager.CreateNewKey(DateTimeOffset activationDate, DateTimeOffset expirationDate)
+         at Microsoft.AspNetCore.DataProtection.KeyManagement.KeyRingProvider.CreateCacheableKeyRingCore(DateTimeOffset now, IKey keyJustAdded)
+         at Microsoft.AspNetCore.DataProtection.KeyManagement.KeyRingProvider.GetCurrentKeyRingCoreNew(DateTime utcNow, Boolean forceRefresh)
+info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://localhost:5005
+info: Hangfire.BackgroundJobServer[0]
+      Starting Hangfire Server using job storage: 'PostgreSQL Server: Host: 127.0.0.1, DB: smshazard, Schema: hangfire'
+info: Hangfire.BackgroundJobServer[0]
+      Using the following options for PostgreSQL job storage:
+info: Hangfire.BackgroundJobServer[0]
+          Queue poll interval: 00:00:15.
+info: Hangfire.BackgroundJobServer[0]
+          Invisibility timeout: 00:30:00.
+info: Hangfire.BackgroundJobServer[0]
+          Use sliding invisibility timeout: False.
+info: Hangfire.BackgroundJobServer[0]
+      Using the following options for Hangfire Server:
+          Worker count: 20
+          Listening queues: 'default'
+          Shutdown timeout: 00:00:15
+          Schedule polling interval: 00:00:15
+info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Development
+info: Microsoft.Hosting.Lifetime[0]
+      Content root path: C:\Users\GCAA\Documents\msc_project_works\CSCD602_Advanced_Software_Engineering\sms-hazard\src\SMSHazard.Web
+info: Hangfire.Server.BackgroundServerProcess[0]
+      Server desktop-v7pf9lt:22396:20314a56 successfully announced in 18.0937 ms
+info: Hangfire.Server.BackgroundServerProcess[0]
+      Server desktop-v7pf9lt:22396:20314a56 is starting the registered dispatchers: ServerWatchdog, ServerJobCancellationWatcher, ExpirationManager, CountersAggregator, Worker, DelayedJobScheduler, RecurringJobScheduler...
+info: Hangfire.Server.BackgroundServerProcess[0]
+      Server desktop-v7pf9lt:22396:20314a56 all the dispatchers started

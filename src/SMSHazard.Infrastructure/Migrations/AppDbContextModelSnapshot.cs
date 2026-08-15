@@ -399,6 +399,9 @@ namespace SMSHazard.Infrastructure.Migrations
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
 
+                    b.Property<bool>("IsAnonymous")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTime>("OccurrenceDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -425,6 +428,10 @@ namespace SMSHazard.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<string>("TrackingCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -435,6 +442,9 @@ namespace SMSHazard.Infrastructure.Migrations
                     b.HasIndex("HazardCategoryId");
 
                     b.HasIndex("ReferenceNo")
+                        .IsUnique();
+
+                    b.HasIndex("TrackingCode")
                         .IsUnique();
 
                     b.ToTable("HazardReports");
@@ -538,6 +548,41 @@ namespace SMSHazard.Infrastructure.Migrations
                     b.HasIndex("HazardReportId");
 
                     b.ToTable("RiskAssessments");
+                });
+
+            modelBuilder.Entity("SMSHazard.Domain.Entities.SystemSettings", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("AllowAnonymousReporting")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LogoPath")
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
+
+                    b.Property<string>("OrganizationName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("SupportEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SystemSettings");
                 });
 
             modelBuilder.Entity("SMSHazard.Infrastructure.Identity.ApplicationUser", b =>

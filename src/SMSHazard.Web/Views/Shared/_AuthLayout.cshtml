@@ -1,0 +1,84 @@
+@inject ISystemSettingsService SettingsSvc
+@{
+    var branding = await SettingsSvc.GetAsync();
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] · @branding.OrganizationName</title>
+    <link rel="stylesheet" href="~/lib/tailwind/app.css" />
+    <link rel="stylesheet" href="~/lib/toastr/toastr.min.css" />
+    <link rel="stylesheet" href="~/lib/flatpickr/flatpickr.min.css" />
+    <link rel="stylesheet" href="~/lib/select2/css/select2.min.css" />
+    <link rel="stylesheet" href="~/css/sms-polish.css" asp-append-version="true" />
+</head>
+<body class="bg-slate-100 text-slate-800">
+<div class="auth-shell min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+        <div class="page-shell text-center mb-4">
+            <div class="flex items-center justify-center gap-2 text-xl font-semibold text-slate-900">
+                @if (!string.IsNullOrEmpty(branding.LogoPath))
+                {
+                    <img src="@branding.LogoPath" alt="@branding.OrganizationName" class="h-9 w-auto" />
+                }
+                else
+                {
+                    <i data-lucide="shield-check" class="text-primary"></i>
+                }
+                <span>@branding.OrganizationName</span>
+            </div>
+            <div class="text-slate-500 text-sm">Safety Management System</div>
+        </div>
+        <div class="card auth-card page-shell">
+            <div class="card-body p-6">
+                @RenderBody()
+            </div>
+        </div>
+        <div class="text-center text-slate-500 text-xs mt-4">&copy; 2026 SMS-Hazard · CSCD602</div>
+    </div>
+</div>
+<script src="~/lib/jquery/jquery.min.js"></script>
+<script src="~/lib/lucide/lucide.min.js"></script>
+<script src="~/lib/toastr/toastr.min.js"></script>
+<script src="~/lib/flatpickr/flatpickr.min.js"></script>
+<script src="~/lib/select2/js/select2.full.min.js"></script>
+<script>
+    if (window.lucide) lucide.createIcons();
+    if (window.flatpickr) {
+        document.querySelectorAll('input[type="date"]:not([data-flatpickr="off"]), input[data-flatpickr]:not([data-flatpickr="off"]), input.js-date:not([data-flatpickr="off"])').forEach(function (el) {
+            if (el._flatpickr) return;
+            flatpickr(el, {
+                dateFormat: 'Y-m-d',
+                allowInput: true,
+                disableMobile: true
+            });
+        });
+    }
+    if (window.jQuery && jQuery.fn.select2) {
+        jQuery('select:not([data-select2="off"])').each(function () {
+            var $select = jQuery(this);
+            if ($select.hasClass('select2-hidden-accessible')) return;
+            var placeholder = $select.find('option[value=""]').first().text() || $select.attr('placeholder') || 'Select an option';
+            var compact = $select.hasClass('btn-sm') || $select.hasClass('!w-auto') || $select.data('select2Width') === 'auto';
+            var compactWidth = compact ? Math.max(Math.ceil($select.outerWidth()), 168) + 'px' : '100%';
+            $select.select2({
+                width: compactWidth,
+                placeholder: placeholder,
+                allowClear: $select.find('option[value=""]').length > 0,
+                dropdownAutoWidth: false
+            });
+            $select.next('.select2-container').toggleClass('select2-compact', compact);
+        });
+    }
+    toastr.options = { closeButton: true, progressBar: true, positionClass: 'toast-top-right', timeOut: 4000 };
+    @if (TempData["Success"] is string s) { <text>toastr.success(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(s)));</text> }
+    @if (TempData["Error"] is string e) { <text>toastr.error(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(e)));</text> }
+    @if (TempData["Info"] is string i) { <text>toastr.info(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(i)));</text> }
+</script>
+<script defer src="~/lib/alpine/alpine.min.js"></script>
+<script src="~/js/upload-dropzone.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
